@@ -1,0 +1,167 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * GUÍA·ME V6.1 — sistema de diseño editorial gastronómico.
+ * Crema, negro, dorado, verde. Instrument Serif + Inter.
+ */
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --font-serif: "Instrument Serif", Georgia, serif;
+  --font-sans: "Inter", system-ui, sans-serif;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-gold: var(--gold);
+  --color-green: var(--green);
+  --color-green-foreground: var(--green-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+}
+
+:root {
+  --radius: 0.25rem;
+  --background: oklch(0.968 0.013 88);
+  --foreground: oklch(0.19 0.008 60);
+  --card: oklch(0.985 0.008 88);
+  --card-foreground: oklch(0.19 0.008 60);
+  --popover: oklch(0.985 0.008 88);
+  --popover-foreground: oklch(0.19 0.008 60);
+  --primary: oklch(0.19 0.008 60);
+  --primary-foreground: oklch(0.975 0.012 88);
+  --secondary: oklch(0.93 0.016 88);
+  --secondary-foreground: oklch(0.19 0.008 60);
+  --muted: oklch(0.93 0.016 88);
+  --muted-foreground: oklch(0.48 0.012 70);
+  --accent: oklch(0.76 0.105 78);
+  --accent-foreground: oklch(0.19 0.008 60);
+  --gold: oklch(0.72 0.108 80);
+  --green: oklch(0.42 0.062 150);
+  --green-foreground: oklch(0.975 0.012 88);
+  --destructive: oklch(0.52 0.18 27);
+  --destructive-foreground: oklch(0.975 0.012 88);
+  --border: oklch(0.86 0.018 85);
+  --input: oklch(0.86 0.018 85);
+  --ring: oklch(0.72 0.108 80);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2,
+  h3,
+  .serif {
+    font-family: var(--font-serif);
+    font-weight: 400;
+    letter-spacing: -0.01em;
+  }
+}
+
+@utility eyebrow {
+  font-size: 0.6875rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-muted-foreground);
+}
+
+@utility rule-gold {
+  border-top: 1px solid var(--color-gold);
+}
+
+@utility chip-base {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  padding: 0.45rem 0.85rem;
+  font-size: 0.8125rem;
+  line-height: 1;
+  background-color: transparent;
+  color: var(--color-foreground);
+  transition:
+    background-color 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease;
+}
+
+@utility chip-active {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-primary-foreground);
+}
+
+@utility btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background-color: var(--color-primary);
+  color: var(--color-primary-foreground);
+  border: 1px solid var(--color-primary);
+  padding: 0.95rem 1.5rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  transition: opacity 0.18s ease;
+}
+
+@utility btn-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background-color: transparent;
+  color: var(--color-foreground);
+  border: 1px solid var(--color-border);
+  padding: 0.85rem 1.25rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+@utility field {
+  width: 100%;
+  background-color: var(--color-card);
+  border: 1px solid var(--color-border);
+  padding: 0.7rem 0.8rem;
+  font-size: 0.9rem;
+  color: var(--color-foreground);
+}
+
+.leaflet-container {
+  font-family: var(--font-sans);
+  background: var(--color-muted);
+}
