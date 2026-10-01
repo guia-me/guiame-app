@@ -9,7 +9,7 @@ export type Zona = { id: string; nombre: string; ciudad_id: string };
 export const paisesQuery = {
   queryKey: ["paises"],
   queryFn: async (): Promise<Pais[]> => {
-    const { data, error } = await supabase.from("paises").select("id, nombre, codigo").order("nombre");
+    const { data, error } = await supabase.from("paises").select("id, nombre, codigo_iso2").order("nombre");
     if (error) throw error;
     return data ?? [];
   },
