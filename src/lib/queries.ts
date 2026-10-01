@@ -2,7 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Contexto, Restaurante } from "./guiame";
 
-export type Pais = { id: string; nombre: string; codigo: string };
+export type Pais = { id: string; nombre: string; codigo_iso2: string | null };
 export type Ciudad = { id: string; nombre: string; pais_id: string };
 export type Zona = { id: string; nombre: string; ciudad_id: string };
 
@@ -50,13 +50,16 @@ const CAMPOS = "*";
  * Con "usar mi ubicación" se mantiene país (y ciudad si existe) y se acota por caja de coordenadas.
  */
 export async function buscarRestaurantes(c: Contexto): Promise<Restaurante[]> {
+  // La geografía canónica vive en pais_id/ciudad_id/zona_id. La consulta
+  // siempre filtra en Supabase; el filtro local solo protege contra datos
+  // inconsistentes que pudieran llegar desde una fuente externa.
   let q = supabase.from("restaurantes").select(CAMPOS).limit(60);
 
   if (c.paisId) q = q.eq("pais_id", c.paisId);
   if (c.ciudadId) q = q.eq("ciudad_id", c.ciudadId);
 
   if (c.usarUbicacion && c.lat != null && c.lng != null) {
-    const dLat = 0.18; // ~20 km
+    const dLat = 0.18;
     const dLng = 0.18;
     q = q
       .gte("lat", c.lat - dLat)
@@ -71,7 +74,6 @@ export async function buscarRestaurantes(c: Contexto): Promise<Restaurante[]> {
   if (error) throw error;
   const filas = (data ?? []) as unknown as Restaurante[];
 
-  // Segunda validación en el frontend: nunca mostrar otra zona/ciudad/país.
   return filas.filter((r) => {
     if (c.paisId && r.pais_id !== c.paisId) return false;
     if (c.ciudadId && r.ciudad_id !== c.ciudadId) return false;
