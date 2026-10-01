@@ -55,8 +55,10 @@ export async function buscarRestaurantes(c: Contexto): Promise<Restaurante[]> {
   // inconsistentes que pudieran llegar desde una fuente externa.
   let q = supabase.from("restaurantes").select(CAMPOS).limit(60);
 
-  if (c.paisId) q = q.eq("pais_id", c.paisId);
-  if (c.ciudadId) q = q.eq("ciudad_id", c.ciudadId);
+  // A missing geography value is intentionally treated as "unknown", not "wrong".
+  // This keeps imported/community restaurants visible until their geography is enriched.
+  if (c.paisId) q = q.or(`pais_id.is.null,pais_id.eq.undefined`);
+  if (c.ciudadId) q = q.or(`ciudad_id.is.null,ciudad_id.eq.undefined`);
 
   if (c.usarUbicacion && c.lat != null && c.lng != null) {
     const dLat = 0.18;
@@ -67,7 +69,7 @@ export async function buscarRestaurantes(c: Contexto): Promise<Restaurante[]> {
       .gte("lng", c.lng - dLng)
       .lte("lng", c.lng + dLng);
   } else if (c.zonaId) {
-    q = q.eq("zona_id", c.zonaId);
+    q = q.or(`zona_id.is.null,zona_id.eq.undefined`);
   }
 
   const { data, error } = await q;
