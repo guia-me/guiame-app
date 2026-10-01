@@ -57,8 +57,8 @@ export async function buscarRestaurantes(c: Contexto): Promise<Restaurante[]> {
 
   // A missing geography value is intentionally treated as "unknown", not "wrong".
   // This keeps imported/community restaurants visible until their geography is enriched.
-  if (c.paisId) q = q.or(`pais_id.is.null,pais_id.eq.undefined`);
-  if (c.ciudadId) q = q.or(`ciudad_id.is.null,ciudad_id.eq.undefined`);
+  if (c.paisId) q = q.or(`pais_id.is.null,pais_id.eq.${c.paisId}`);
+  if (c.ciudadId) q = q.or(`ciudad_id.is.null,ciudad_id.eq.${c.ciudadId}`);
 
   if (c.usarUbicacion && c.lat != null && c.lng != null) {
     const dLat = 0.18;
@@ -69,7 +69,7 @@ export async function buscarRestaurantes(c: Contexto): Promise<Restaurante[]> {
       .gte("lng", c.lng - dLng)
       .lte("lng", c.lng + dLng);
   } else if (c.zonaId) {
-    q = q.or(`zona_id.is.null,zona_id.eq.undefined`);
+    q = q.or(`zona_id.is.null,zona_id.eq.${c.zonaId}`);
   }
 
   const { data, error } = await q;
@@ -77,9 +77,9 @@ export async function buscarRestaurantes(c: Contexto): Promise<Restaurante[]> {
   const filas = (data ?? []) as unknown as Restaurante[];
 
   return filas.filter((r) => {
-    if (c.paisId && r.pais_id !== c.paisId) return false;
-    if (c.ciudadId && r.ciudad_id !== c.ciudadId) return false;
-    if (!c.usarUbicacion && c.zonaId && r.zona_id !== c.zonaId) return false;
+    if (c.paisId && r.pais_id != null && r.pais_id !== c.paisId) return false;
+    if (c.ciudadId && r.ciudad_id != null && r.ciudad_id !== c.ciudadId) return false;
+    if (!c.usarUbicacion && c.zonaId && r.zona_id != null && r.zona_id !== c.zonaId) return false;
     return true;
   });
 }
