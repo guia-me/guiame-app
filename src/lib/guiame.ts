@@ -1,6 +1,4 @@
 // Núcleo de dominio GUÍA·ME: contexto de usuario, MATCH V6.1 y utilidades.
-import { supabase } from "@/integrations/supabase/client";
-
 export type EstadoInfo = "verificado" | "comunidad" | "demo" | "pendiente";
 
 export type Restaurante = {
@@ -144,15 +142,8 @@ export async function alternarFavorito(id: string): Promise<string[]> {
   const activo = actuales.includes(id);
   const siguientes = activo ? actuales.filter((x) => x !== id) : [...actuales, id];
   localStorage.setItem(FAV_KEY, JSON.stringify(siguientes));
-  try {
-    if (activo) {
-      await supabase.from("favoritos").delete().eq("anon_id", anonId()).eq("restaurante_id", id);
-    } else {
-      await supabase.from("favoritos").insert({ anon_id: anonId(), restaurante_id: id });
-    }
-  } catch {
-    // sincronización best-effort
-  }
+  // Los favoritos son locales por diseño: la pantalla ya los presenta como
+  // "guardados en este dispositivo". No dependemos de autenticación Supabase.
   return siguientes;
 }
 
