@@ -12,7 +12,8 @@
     "format": "prettier --write ."
   },
   "overrides": {
-    "rolldown": "1.2.1"
+    "rolldown": "1.2.1",
+    "@tanstack/start-server-core": "1.169.39"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -46,7 +47,7 @@
     "@tailwindcss/vite": "^4.2.1",
     "@tanstack/react-query": "^5.101.1",
     "@tanstack/react-router": "1.170.40",
-    "@tanstack/react-start": "1.168.38",
+    "@tanstack/react-start": "1.168.60",
     "@tanstack/router-plugin": "1.168.38",
     "@types/leaflet": "^1.9.22",
     "class-variance-authority": "^0.7.1",
