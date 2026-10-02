@@ -107,6 +107,9 @@ export interface FileRoutesByTo {
   '/evaluar/$id': typeof EvaluarIdRoute
   '/por-que/$id': typeof PorQueIdRoute
   '/restaurante/$id': typeof RestauranteIdRoute
+  '/admin': typeof AdminRoute
+  '/requests': typeof RequestsRoute
+  '/restaurantes': typeof RestaurantesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -119,6 +122,9 @@ export interface FileRoutesById {
   '/evaluar/$id': typeof EvaluarIdRoute
   '/por-que/$id': typeof PorQueIdRoute
   '/restaurante/$id': typeof RestauranteIdRoute
+  '/admin': typeof AdminRoute
+  '/requests': typeof RequestsRoute
+  '/restaurantes': typeof RestaurantesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -132,6 +138,9 @@ export interface FileRouteTypes {
     | '/evaluar/$id'
     | '/por-que/$id'
     | '/restaurante/$id'
+    | '/admin'
+    | '/requests'
+    | '/restaurantes'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -143,6 +152,9 @@ export interface FileRouteTypes {
     | '/evaluar/$id'
     | '/por-que/$id'
     | '/restaurante/$id'
+    | '/admin'
+    | '/requests'
+    | '/restaurantes'
   id:
     | '__root__'
     | '/'
@@ -154,6 +166,9 @@ export interface FileRouteTypes {
     | '/evaluar/$id'
     | '/por-que/$id'
     | '/restaurante/$id'
+    | '/admin'
+    | '/requests'
+    | '/restaurantes'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
