@@ -18,6 +18,9 @@ import { Route as CompletarIdRouteImport } from './routes/completar.$id'
 import { Route as EvaluarIdRouteImport } from './routes/evaluar.$id'
 import { Route as PorQueIdRouteImport } from './routes/por-que.$id'
 import { Route as RestauranteIdRouteImport } from './routes/restaurante.$id'
+import { Route as AdminRouteImport } from './routes/admin'
+import { Route as RequestsRouteImport } from './routes/requests'
+import { Route as RestaurantesRouteImport } from './routes/restaurantes'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -64,6 +67,21 @@ const RestauranteIdRoute = RestauranteIdRouteImport.update({
   path: '/restaurante/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RequestsRoute = RequestsRouteImport.update({
+  id: '/requests',
+  path: '/requests',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RestaurantesRoute = RestaurantesRouteImport.update({
+  id: '/restaurantes',
+  path: '/restaurantes',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -75,6 +93,9 @@ export interface FileRoutesByFullPath {
   '/evaluar/$id': typeof EvaluarIdRoute
   '/por-que/$id': typeof PorQueIdRoute
   '/restaurante/$id': typeof RestauranteIdRoute
+  '/admin': typeof AdminRoute
+  '/requests': typeof RequestsRoute
+  '/restaurantes': typeof RestaurantesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -212,6 +233,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RestauranteIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/requests': {
+      id: '/requests'
+      path: '/requests'
+      fullPath: '/requests'
+      preLoaderRoute: typeof RequestsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/restaurantes': {
+      id: '/restaurantes'
+      path: '/restaurantes'
+      fullPath: '/restaurantes'
+      preLoaderRoute: typeof RestaurantesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -225,6 +267,9 @@ const rootRouteChildren: RootRouteChildren = {
   EvaluarIdRoute: EvaluarIdRoute,
   PorQueIdRoute: PorQueIdRoute,
   RestauranteIdRoute: RestauranteIdRoute,
+  AdminRoute: AdminRoute,
+  RequestsRoute: RequestsRoute,
+  RestaurantesRoute: RestaurantesRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
