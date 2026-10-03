@@ -46,19 +46,18 @@ export const zonasQuery = (ciudadId: string | null) => ({
 const CAMPOS = "*";
 
 /**
- * Filtro geográfico ESTRICTO: país + ciudad + zona se aplican en la consulta.
- * Con "usar mi ubicación" se mantiene país (y ciudad si existe) y se acota por caja de coordenadas.
+ * Búsqueda geográfica canónica.
+ *
+ * La selección País → Ciudad → Zona es un filtro de pertenencia, no una
+ * sugerencia. Nunca se mezclan filas con geografía desconocida o de otra zona.
+ * "Usar mi ubicación" solo cambia el último nivel: país + ciudad siguen siendo
+ * obligatorios y las coordenadas acotan el resultado.
  */
 export async function buscarRestaurantes(c: Contexto): Promise<Restaurante[]> {
-  // La geografía canónica vive en pais_id/ciudad_id/zona_id. La consulta
-  // siempre filtra en Supabase; el filtro local solo protege contra datos
-  // inconsistentes que pudieran llegar desde una fuente externa.
   let q = supabase.from("restaurantes").select(CAMPOS).limit(60);
 
-  // A missing geography value is intentionally treated as "unknown", not "wrong".
-  // This keeps imported/community restaurants visible until their geography is enriched.
-  if (c.paisId) q = q.or(`pais_id.is.null,pais_id.eq.${c.paisId}`);
-  if (c.ciudadId) q = q.or(`ciudad_id.is.null,ciudad_id.eq.${c.ciudadId}`);
+  if (c.paisId) q = q.eq("pais_id", c.paisId);
+  if (c.ciudadId) q = q.eq("ciudad_id", c.ciudadId);
 
   if (c.usarUbicacion && c.lat != null && c.lng != null) {
     const dLat = 0.18;
@@ -69,17 +68,18 @@ export async function buscarRestaurantes(c: Contexto): Promise<Restaurante[]> {
       .gte("lng", c.lng - dLng)
       .lte("lng", c.lng + dLng);
   } else if (c.zonaId) {
-    q = q.or(`zona_id.is.null,zona_id.eq.${c.zonaId}`);
+    q = q.eq("zona_id", c.zonaId);
   }
 
   const { data, error } = await q;
   if (error) throw error;
-  const filas = (data ?? []) as unknown as Restaurante[];
 
-  return filas.filter((r) => {
-    if (c.paisId && r.pais_id != null && r.pais_id !== c.paisId) return false;
-    if (c.ciudadId && r.ciudad_id != null && r.ciudad_id !== c.ciudadId) return false;
-    if (!c.usarUbicacion && c.zonaId && r.zona_id != null && r.zona_id !== c.zonaId) return false;
+  // Defensa adicional: aunque Supabase ya filtró, no dejamos pasar datos
+  // inconsistentes si una fuente externa llegara a devolverlos.
+  return ((data ?? []) as unknown as Restaurante[]).filter((r) => {
+    if (c.paisId && r.pais_id !== c.paisId) return false;
+    if (c.ciudadId && r.ciudad_id !== c.ciudadId) return false;
+    if (!c.usarUbicacion && c.zonaId && r.zona_id !== c.zonaId) return false;
     return true;
   });
 }
