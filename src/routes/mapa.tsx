@@ -8,6 +8,9 @@ import { mapaQuery } from "@/lib/queries";
 const MapView = lazy(() => import("@/components/guiame/MapView"));
 
 export const Route = createFileRoute("/mapa")({
+  // This route depends on client state (localStorage/geolocation) or interactive data fetching.
+  // Keep the initial request on the SSR shell and render the route on the browser.
+  ssr: false,
   head: () => ({
     meta: [
       { title: "Mapa gastronómico — GUÍA·ME" },
