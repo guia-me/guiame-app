@@ -8,6 +8,9 @@ import { AMBIENTES, COCINAS, CON_QUIEN, PRESUPUESTOS, anonId } from "@/lib/guiam
 import { ciudadesQuery, paisesQuery, zonasQuery } from "@/lib/queries";
 
 export const Route = createFileRoute("/agregar")({
+  // This route depends on client state (localStorage/geolocation) or interactive data fetching.
+  // Keep the initial request on the SSR shell and render the route on the browser.
+  ssr: false,
   head: () => ({
     meta: [
       { title: "Agregar un restaurante — GUÍA·ME" },
