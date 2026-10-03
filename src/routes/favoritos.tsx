@@ -6,6 +6,9 @@ import { alternarFavorito, leerFavoritos } from "@/lib/guiame";
 import { porIdsQuery } from "@/lib/queries";
 
 export const Route = createFileRoute("/favoritos")({
+  // This route depends on client state (localStorage/geolocation) or interactive data fetching.
+  // Keep the initial request on the SSR shell and render the route on the browser.
+  ssr: false,
   head: () => ({
     meta: [
       { title: "Tus favoritos — GUÍA·ME" },
