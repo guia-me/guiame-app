@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { MapPin } from "lucide-react";
@@ -13,7 +13,7 @@ export const Route = createFileRoute("/agregar")({
       { title: "Agregar un restaurante — GUÍA·ME" },
       {
         name: "description",
-        content: "¿No encuentras un lugar? Agrégalo: queda pendiente de verificar y la comunidad lo enriquece.",
+        content: "Propón un restaurante para que GUÍA·ME lo incorpore tras verificarlo.",
       },
       { property: "og:title", content: "Agregar un restaurante — GUÍA·ME" },
       { property: "og:description", content: "La comunidad construye la base de GUÍA·ME." },
@@ -23,11 +23,13 @@ export const Route = createFileRoute("/agregar")({
 });
 
 function Agregar() {
-  const navigate = useNavigate();
   const [nombre, setNombre] = useState("");
   const [paisId, setPaisId] = useState<string | null>(null);
+  const [paisNombre, setPaisNombre] = useState<string | null>(null);
   const [ciudadId, setCiudadId] = useState<string | null>(null);
+  const [ciudadNombre, setCiudadNombre] = useState<string | null>(null);
   const [zonaId, setZonaId] = useState<string | null>(null);
+  const [zonaNombre, setZonaNombre] = useState<string | null>(null);
   const [direccion, setDireccion] = useState("");
   const [cocinas, setCocinas] = useState<string[]>([]);
   const [presupuesto, setPresupuesto] = useState<string | null>(null);
@@ -39,6 +41,7 @@ function Agregar() {
   const [comentario, setComentario] = useState("");
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [enviando, setEnviando] = useState(false);
+  const [enviado, setEnviado] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const paises = useQuery(paisesQuery);
@@ -52,8 +55,10 @@ function Agregar() {
 
   const ubicar = () => {
     if (!("geolocation" in navigator)) return;
-    navigator.geolocation.getCurrentPosition((p) =>
-      setCoords({ lat: p.coords.latitude, lng: p.coords.longitude }),
+    navigator.geolocation.getCurrentPosition(
+      (p) => setCoords({ lat: p.coords.latitude, lng: p.coords.longitude }),
+      () => setError("No pudimos obtener tu ubicación. Puedes continuar sin ella."),
+      { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 },
     );
   };
 
@@ -61,51 +66,71 @@ function Agregar() {
     if (!puede) return;
     setEnviando(true);
     setError(null);
+
     const rango = PRESUPUESTOS.find((p) => p.label === presupuesto);
-    const { data, error: e } = await supabase
-      .from("restaurantes")
-      .insert({
-        nombre: nombre.trim(),
-        pais_id: paisId!,
-        ciudad_id: ciudadId!,
-        zona_id: zonaId!,
-        direccion: direccion.trim() || null,
-        cocina: cocinas,
-        ambiente: ambientes,
+    const { error: e } = await supabase.from("aportes_restaurantes").insert({
+      anon_id: anonId(),
+      nombre: nombre.trim(),
+      pais: paisNombre,
+      ciudad: ciudadNombre,
+      zona: zonaNombre,
+      direccion: direccion.trim() || null,
+      tipo_cocina: cocinas.join(", ") || null,
+      rango_precio: rango?.label ?? null,
+      ambiente: ambientes.join(", ") || null,
+      lat: coords?.lat ?? null,
+      lng: coords?.lng ?? null,
+      contacto: telefono.trim() || web.trim() || null,
+      imagen: imagen.trim() || null,
+      estado: "pendiente",
+      payload: {
+        pais_id: paisId,
+        ciudad_id: ciudadId,
+        zona_id: zonaId,
+        cocinas,
+        ambientes,
         contextos,
-        precio_min: rango?.min ?? null,
-        precio_max: rango?.max ?? null,
         telefono: telefono.trim() || null,
         web: web.trim() || null,
-        imagen_url: imagen.trim() || null,
-        lat: coords?.lat ?? null,
-        lng: coords?.lng ?? null,
-        fuente: "Aporte de comunidad",
-        estado: "pendiente" as const,
-      })
-      .select("id")
-      .single();
-
-    if (e || !data) {
-      setEnviando(false);
-      setError("No pudimos guardar el lugar. Intenta de nuevo.");
-      return;
-    }
-
-    await supabase.from("aportes_restaurantes").insert({
-      anon_id: anonId(),
-      restaurante_id: data.id,
-      payload: { nombre: nombre.trim(), comentario: comentario.trim() || null },
+        comentario: comentario.trim() || null,
+        precio_min: rango?.min ?? null,
+        precio_max: rango?.max ?? null,
+      },
     });
 
     setEnviando(false);
-    navigate({ to: "/restaurante/$id", params: { id: data.id } });
+    if (e) {
+      setError("No pudimos enviar el restaurante. Intenta de nuevo.");
+      return;
+    }
+
+    setEnviado(true);
   };
+
+  if (enviado) {
+    return (
+      <Shell titulo="Restaurante enviado" subtitulo="Gracias por ayudar a construir GUÍA·ME.">
+        <div className="py-12 text-center">
+          <p className="text-lg">Recibimos <strong>{nombre}</strong>.</p>
+          <p className="mt-3 text-sm text-muted-foreground">
+            Quedará pendiente de verificación antes de aparecer en las recomendaciones.
+          </p>
+          <button
+            type="button"
+            onClick={() => window.location.assign("/")}
+            className="btn-primary mt-8 w-full"
+          >
+            Volver a GUÍA·ME
+          </button>
+        </div>
+      </Shell>
+    );
+  }
 
   return (
     <Shell
       titulo="Agregar un restaurante"
-      subtitulo="Quedará como PENDIENTE de verificar hasta que la comunidad lo confirme."
+      subtitulo="La comunidad puede proponer lugares de cualquier ciudad. Primero los verificamos; después entran al motor de MATCH."
     >
       <div className="divide-y divide-border">
         <section className="py-5">
@@ -120,8 +145,11 @@ function Agregar() {
               activo={paisId === p.id}
               onClick={() => {
                 setPaisId(p.id);
+                setPaisNombre(p.nombre);
                 setCiudadId(null);
+                setCiudadNombre(null);
                 setZonaId(null);
+                setZonaNombre(null);
               }}
             >
               {p.nombre}
@@ -137,7 +165,9 @@ function Agregar() {
                 activo={ciudadId === c.id}
                 onClick={() => {
                   setCiudadId(c.id);
+                  setCiudadNombre(c.nombre);
                   setZonaId(null);
+                  setZonaNombre(null);
                 }}
               >
                 {c.nombre}
@@ -149,7 +179,7 @@ function Agregar() {
         {ciudadId && (
           <Campo label="Zona">
             {(zonas.data ?? []).map((z) => (
-              <Chip key={z.id} activo={zonaId === z.id} onClick={() => setZonaId(z.id)}>
+              <Chip key={z.id} activo={zonaId === z.id} onClick={() => { setZonaId(z.id); setZonaNombre(z.nombre); }}>
                 {z.nombre}
               </Chip>
             ))}
@@ -217,11 +247,7 @@ function Agregar() {
 
         <section className="py-5">
           <p className="eyebrow">Comentario</p>
-          <textarea
-            className="field mt-3 min-h-24"
-            value={comentario}
-            onChange={(e) => setComentario(e.target.value)}
-          />
+          <textarea className="field mt-3 min-h-24" value={comentario} onChange={(e) => setComentario(e.target.value)} />
         </section>
       </div>
 
@@ -233,7 +259,7 @@ function Agregar() {
           disabled={!puede || enviando}
           className="btn-primary w-full disabled:opacity-40"
         >
-          {enviando ? "Enviando…" : "Agregar restaurante"}
+          {enviando ? "Enviando…" : "Enviar restaurante"}
         </button>
       </div>
     </Shell>
