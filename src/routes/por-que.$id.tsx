@@ -6,6 +6,9 @@ import { calcularMatch, leerContexto, type Contexto } from "@/lib/guiame";
 import { restauranteQuery } from "@/lib/queries";
 
 export const Route = createFileRoute("/por-que/$id")({
+  // This route depends on client state (localStorage/geolocation) or interactive data fetching.
+  // Keep the initial request on the SSR shell and render the route on the browser.
+  ssr: false,
   head: () => ({
     meta: [
       { title: "Por qué encaja contigo — GUÍA·ME" },
