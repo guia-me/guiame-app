@@ -9,6 +9,9 @@ import { restauranteQuery } from "@/lib/queries";
 const TIPOS = ["Plato", "Ambiente", "Precio observado", "Característica"] as const;
 
 export const Route = createFileRoute("/completar/$id")({
+  // This route depends on client state (localStorage/geolocation) or interactive data fetching.
+  // Keep the initial request on the SSR shell and render the route on the browser.
+  ssr: false,
   head: () => ({
     meta: [
       { title: "Completar ficha — GUÍA·ME" },
