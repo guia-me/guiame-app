@@ -162,7 +162,7 @@ function Inicio() {
 
         {c.paisId && (
           <Campo label="Ciudad">
-            {ciudades.map((ci) => (
+            {ciudadesVisibles.map((ci) => (
               <Chip
                 key={ci.id}
                 activo={c.ciudadId === ci.id}
@@ -183,7 +183,7 @@ function Inicio() {
 
         {c.ciudadId && (
           <Campo label="Zona">
-            {zonas.map((z) => (
+            {zonasVisibles.map((z) => (
               <Chip
                 key={z.id}
                 activo={c.zonaId === z.id}
