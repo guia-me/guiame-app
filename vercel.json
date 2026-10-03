@@ -1,4 +1,4 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "framework": "tanstack-start"
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
 }
