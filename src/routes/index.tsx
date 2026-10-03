@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { MapPin } from "lucide-react";
 import { Campo, Chip, Shell } from "@/components/guiame/ui";
 import {
@@ -14,7 +15,7 @@ import {
   leerContexto,
   type Contexto,
 } from "@/lib/guiame";
-import { ciudadesQuery, paisesQuery, zonasQuery } from "@/lib/queries";
+import type { Pais, Ciudad, Zona } from "@/lib/queries";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -46,9 +47,51 @@ function Inicio() {
     setListo(true);
   }, []);
 
-  const paises = useQuery(paisesQuery);
-  const ciudades = useQuery(ciudadesQuery(c.paisId));
-  const zonas = useQuery(zonasQuery(c.ciudadId));
+  const [paises, setPaises] = useState<Pais[]>([]);
+  const [ciudades, setCiudades] = useState<Ciudad[]>([]);
+  const [zonas, setZonas] = useState<Zona[]>([]);
+  const [geoError, setGeoError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let activo = true;
+    supabase.from("paises").select("id, nombre, codigo_iso2").order("nombre").then(({ data, error }) => {
+      if (!activo) return;
+      if (error) setGeoError(`No se pudo cargar País: ${error.message}`);
+      else setPaises((data ?? []) as Pais[]);
+    }).catch((error) => {
+      if (activo) setGeoError(`No se pudo cargar País: ${error instanceof Error ? error.message : "error de conexión"}`);
+    });
+    return () => { activo = false; };
+  }, []);
+
+  useEffect(() => {
+    let activo = true;
+    setCiudades([]);
+    setZonas([]);
+    if (!c.paisId) return () => { activo = false; };
+    supabase.from("ciudades").select("id, nombre, pais_id").eq("pais_id", c.paisId).order("nombre").then(({ data, error }) => {
+      if (!activo) return;
+      if (error) setGeoError(`No se pudo cargar Ciudad: ${error.message}`);
+      else setCiudades((data ?? []) as Ciudad[]);
+    }).catch((error) => {
+      if (activo) setGeoError(`No se pudo cargar Ciudad: ${error instanceof Error ? error.message : "error de conexión"}`);
+    });
+    return () => { activo = false; };
+  }, [c.paisId]);
+
+  useEffect(() => {
+    let activo = true;
+    setZonas([]);
+    if (!c.ciudadId) return () => { activo = false; };
+    supabase.from("zonas").select("id, nombre, ciudad_id").eq("ciudad_id", c.ciudadId).order("nombre").then(({ data, error }) => {
+      if (!activo) return;
+      if (error) setGeoError(`No se pudo cargar Zona: ${error.message}`);
+      else setZonas((data ?? []) as Zona[]);
+    }).catch((error) => {
+      if (activo) setGeoError(`No se pudo cargar Zona: ${error instanceof Error ? error.message : "error de conexión"}`);
+    });
+    return () => { activo = false; };
+  }, [c.ciudadId]);
 
   const set = (parcial: Partial<Contexto>) => setC((prev) => ({ ...prev, ...parcial }));
 
@@ -89,9 +132,10 @@ function Inicio() {
       titulo="¿Dónde deberías comer hoy?"
       subtitulo="Tú pruebas. Tú evalúas. GUÍA·ME aprende."
     >
+      {geoError && <div className="mt-4 border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700">{geoError}</div>}
       <div className="divide-y divide-border">
         <Campo label="País">
-          {(paises.data ?? []).map((p) => (
+          {paises.map((p) => (
             <Chip
               key={p.id}
               activo={c.paisId === p.id}
@@ -113,7 +157,7 @@ function Inicio() {
 
         {c.paisId && (
           <Campo label="Ciudad">
-            {(ciudades.data ?? []).map((ci) => (
+            {ciudades.map((ci) => (
               <Chip
                 key={ci.id}
                 activo={c.ciudadId === ci.id}
@@ -134,7 +178,7 @@ function Inicio() {
 
         {c.ciudadId && (
           <Campo label="Zona">
-            {(zonas.data ?? []).map((z) => (
+            {zonas.map((z) => (
               <Chip
                 key={z.id}
                 activo={c.zonaId === z.id}
