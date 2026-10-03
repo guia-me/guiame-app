@@ -31,9 +31,14 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
 function createSupabaseClient() {
   // Vercel/Vite client configuration: only VITE_* variables are supported.
   // The modern Supabase publishable key (sb_publishable_...) is safe for the browser.
-  const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+  // Production fallback: these are the browser-safe Supabase URL/key for GUÍA·ME.
+  // Netlify/Vercel environment variables still take precedence when configured.
+  const SUPABASE_URL =
+    import.meta.env.VITE_SUPABASE_URL || 'https://nexkboijbwptvvfuqocy.supabase.co';
   const SUPABASE_PUBLISHABLE_KEY =
-    import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY;
+    import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+    import.meta.env.VITE_SUPABASE_ANON_KEY ||
+    'sb_publishable_1khbNQcWk7CA9yVUOfd1ZQ_9gndn6YI';
 
   if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
     const missing = [
