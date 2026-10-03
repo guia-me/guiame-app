@@ -12,6 +12,9 @@ import {
 import { buscarRestaurantes } from "@/lib/queries";
 
 export const Route = createFileRoute("/matches")({
+  // This route depends on client state (localStorage/geolocation) or interactive data fetching.
+  // Keep the initial request on the SSR shell and render the route on the browser.
+  ssr: false,
   head: () => ({
     meta: [
       { title: "Tus 3 lugares — GUÍA·ME" },
