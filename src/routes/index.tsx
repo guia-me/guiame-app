@@ -63,8 +63,15 @@ function Inicio() {
           usarUbicacion: true,
           lat: pos.coords.latitude,
           lng: pos.coords.longitude,
+          zonaId: null,
+          zonaNombre: undefined,
         }),
       () => set({ usarUbicacion: false, lat: null, lng: null }),
+      {
+        enableHighAccuracy: false,
+        timeout: 10000,
+        maximumAge: 300000,
+      },
     );
   };
 
