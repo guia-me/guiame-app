@@ -1,5 +1,4 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { MapPin } from "lucide-react";
@@ -52,46 +51,52 @@ function Inicio() {
   const [zonas, setZonas] = useState<Zona[]>([]);
   const [geoError, setGeoError] = useState<string | null>(null);
 
+  // Cargamos toda la geografía una sola vez. Después, cambiar País/Ciudad
+  // es sólo estado local: ningún click vuelve a disparar una consulta.
   useEffect(() => {
     let activo = true;
-    supabase.from("paises").select("id, nombre, codigo_iso2").order("nombre").then(({ data, error }) => {
-      if (!activo) return;
-      if (error) setGeoError(`No se pudo cargar País: ${error.message}`);
-      else setPaises((data ?? []) as Pais[]);
-    }).catch((error) => {
-      if (activo) setGeoError(`No se pudo cargar País: ${error instanceof Error ? error.message : "error de conexión"}`);
-    });
-    return () => { activo = false; };
+
+    const cargarGeografia = async () => {
+      try {
+        const [paisesResult, ciudadesResult, zonasResult] = await Promise.all([
+          supabase.from("paises").select("id, nombre, codigo_iso2").order("nombre"),
+          supabase.from("ciudades").select("id, nombre, pais_id").order("nombre"),
+          supabase.from("zonas").select("id, nombre, ciudad_id").order("nombre"),
+        ]);
+
+        if (!activo) return;
+
+        const error = paisesResult.error || ciudadesResult.error || zonasResult.error;
+        if (error) {
+          setGeoError(`No se pudo cargar la geografía: ${error.message}`);
+          return;
+        }
+
+        setPaises((paisesResult.data ?? []) as Pais[]);
+        setCiudades((ciudadesResult.data ?? []) as Ciudad[]);
+        setZonas((zonasResult.data ?? []) as Zona[]);
+      } catch (error) {
+        if (activo) {
+          setGeoError(
+            `No se pudo cargar la geografía: ${error instanceof Error ? error.message : "error de conexión"}`,
+          );
+        }
+      }
+    };
+
+    void cargarGeografia();
+    return () => {
+      activo = false;
+    };
   }, []);
 
-  useEffect(() => {
-    let activo = true;
-    setCiudades([]);
-    setZonas([]);
-    if (!c.paisId) return () => { activo = false; };
-    supabase.from("ciudades").select("id, nombre, pais_id").eq("pais_id", c.paisId).order("nombre").then(({ data, error }) => {
-      if (!activo) return;
-      if (error) setGeoError(`No se pudo cargar Ciudad: ${error.message}`);
-      else setCiudades((data ?? []) as Ciudad[]);
-    }).catch((error) => {
-      if (activo) setGeoError(`No se pudo cargar Ciudad: ${error instanceof Error ? error.message : "error de conexión"}`);
-    });
-    return () => { activo = false; };
-  }, [c.paisId]);
+  const ciudadesVisibles = c.paisId
+    ? ciudades.filter((ci) => ci.pais_id === c.paisId)
+    : [];
 
-  useEffect(() => {
-    let activo = true;
-    setZonas([]);
-    if (!c.ciudadId) return () => { activo = false; };
-    supabase.from("zonas").select("id, nombre, ciudad_id").eq("ciudad_id", c.ciudadId).order("nombre").then(({ data, error }) => {
-      if (!activo) return;
-      if (error) setGeoError(`No se pudo cargar Zona: ${error.message}`);
-      else setZonas((data ?? []) as Zona[]);
-    }).catch((error) => {
-      if (activo) setGeoError(`No se pudo cargar Zona: ${error instanceof Error ? error.message : "error de conexión"}`);
-    });
-    return () => { activo = false; };
-  }, [c.ciudadId]);
+  const zonasVisibles = c.ciudadId
+    ? zonas.filter((z) => z.ciudad_id === c.ciudadId)
+    : [];
 
   const set = (parcial: Partial<Contexto>) => setC((prev) => ({ ...prev, ...parcial }));
 
