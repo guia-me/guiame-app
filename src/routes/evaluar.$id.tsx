@@ -59,8 +59,8 @@ function Evaluar() {
       con_quien: conQuien,
       personas,
       presupuesto,
-      volveria,
-      recomendaria,
+      volverias: volveria === "si" ? true : volveria === "no" ? false : null,
+      recomendarias: recomendaria,
       plato: plato.trim() || null,
       comentario: comentario.trim() || null,
     });
