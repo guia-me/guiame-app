@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "./integrations/supabase/client";
 import {
-  AMBIENTES, COCINAS, CON_QUIEN, PERSONAS, PRESUPUESTOS,
+  AMBIENTES, ANTOJOS, COCINAS, CON_QUIEN, PERSONAS, PRESUPUESTOS,
   anonId, calcularMatch, contextoVacio, guardarContexto, leerContexto, rangoPrecio,
   type Contexto, type Restaurante,
 } from "./lib/guiame";
@@ -12,7 +12,7 @@ type Zona = { id:string; nombre:string; ciudad_id:string };
 
 const clean = (v:any): Restaurante => ({
   id:v.id, nombre:v.nombre, pais_id:v.pais_id, ciudad_id:v.ciudad_id, zona_id:v.zona_id,
-  direccion:v.direccion ?? null, cocina:Array.isArray(v.cocina)?v.cocina:[],
+  direccion:v.direccion ?? null, cocina:Array.isArray(v.cocina)?v.cocina:[], especialidades:Array.isArray(v.especialidades)?v.especialidades:[],
   precio_min:v.precio_min ?? null, precio_max:v.precio_max ?? null,
   ambiente:Array.isArray(v.ambiente)?v.ambiente:[], contextos:Array.isArray(v.contextos)?v.contextos:[],
   lat:v.lat ?? null, lng:v.lng ?? null, telefono:v.telefono ?? null, web:v.web ?? null,
@@ -85,6 +85,7 @@ export default function App() {
       </section>
       <section className="card">
         <h2>Primero, dime dónde</h2>
+        <div className="search-mode"><button className={ctx.modoBusqueda==="restaurante"?"chip active":"chip"} onClick={()=>set({modoBusqueda:"restaurante"})}>BUSCO UN RESTAURANTE</button><button className={ctx.modoBusqueda==="antojo"?"chip active":"chip"} onClick={()=>set({modoBusqueda:"antojo"})}>TENGO UN ANTOJO</button></div>
         {error&&<div className="error">{error}</div>}
         {loading?<div className="loading">Cargando lugares…</div>:<>
           <label>País</label>
@@ -103,6 +104,7 @@ export default function App() {
 
 function Filters({ctx,set}:{ctx:Contexto;set:(x:Partial<Contexto>)=>void}){
  return <div className="filters">
+  <label>{ctx.modoBusqueda==="antojo"?"¿Qué se te antoja?":"¿Qué tipo de cocina?"}</label><div className="chips">{(ctx.modoBusqueda==="antojo"?ANTOJOS:COCINAS).map(x=><button key={x} className={(ctx.modoBusqueda==="antojo"?ctx.antojos:ctx.cocinas).includes(x)?"chip active":"chip"} onClick={()=>{const key=ctx.modoBusqueda==="antojo"?"antojos":"cocinas";const values=ctx[key];set({[key]:values.includes(x)?values.filter(v=>v!==x):[...values,x]} as Partial<Contexto>)}}>{x}</button>)}</div>
   <label>¿Con quién?</label><div className="chips">{CON_QUIEN.map(x=><button key={x} className={ctx.conQuien===x?"chip active":"chip"} onClick={()=>set({conQuien:ctx.conQuien===x?null:x})}>{x}</button>)}</div>
   <label>¿Cuántos?</label><div className="chips">{PERSONAS.map(x=><button key={x} className={ctx.personas===x?"chip active":"chip"} onClick={()=>set({personas:ctx.personas===x?null:x})}>{x}</button>)}</div>
   <label>Presupuesto por persona</label><div className="chips">{PRESUPUESTOS.map(x=><button key={x.label} className={ctx.presupuesto===x.label?"chip active":"chip"} onClick={()=>set({presupuesto:x.label})}>{x.label}</button>)}</div>
