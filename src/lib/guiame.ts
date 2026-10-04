@@ -29,6 +29,9 @@ export type Restaurante = {
   contexto_scores: Record<string, number> | null;
   pct_volveria: number | null;
   pct_recomendaria: number | null;
+  cost_avg?: number | null;
+  descripcion?: string | null;
+  platos_recomendados?: string | null;
 };
 
 export const CON_QUIEN = ["Familia", "Pareja", "Amigos", "Trabajo", "Solo"] as const;
