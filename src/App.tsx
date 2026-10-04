@@ -148,7 +148,7 @@ if(done)return <div className="app"><main className="results"><p className="eyeb
 return <div className="app"><header className="top"><button className="back" onClick={onBack}>← Cancelar</button><div className="brand">GUÍA<span>·</span>ME</div></header><main className="results"><p className="eyebrow">EVALÚA TU EXPERIENCIA</p><h1>{r.nombre}</h1><p className="lead">Valora cada dimensión de 0 a 30. Tu experiencia es parte del motor de GUÍA·ME.</p><Score label="Cocina" value={food} setValue={setFood}/><Score label="Decoración" value={decor} setValue={setDecor}/><Score label="Servicio" value={service} setValue={setService}/><Score label="Precio" value={cost} setValue={setCost}/><div className="detail-section"><label>¿Cuánto pagaste? ({currency(ctx.paisNombre)})</label><input value={precio} onChange={e=>setPrecio(e.target.value)} inputMode="decimal" placeholder="Ej. 28.50"/><label>Plato que probaste</label><input value={plato} onChange={e=>setPlato(e.target.value)} placeholder="Ej. Ceviche de corvina"/><label>Comentario</label><textarea value={comentario} onChange={e=>setComentario(e.target.value)} rows={4} placeholder="Tu experiencia…"/></div>{error&&<div className="error">{error}</div>}<button className="primary" disabled={saving} onClick={save}>{saving?"GUARDANDO…":"PUBLICAR MI EVALUACIÓN"}</button></main></div>}
 function currency(p?:string){const x=(p??"").toLowerCase();if(x.includes("chile"))return"CLP";if(x.includes("méxico")||x.includes("mexico"))return"MXN";if(x.includes("panamá")||x.includes("panama"))return"USD";return"moneda local"}
 function Inscription({paises,ciudades,zonas,onBack}:{paises:Pais[];ciudades:Ciudad[];zonas:Zona[];onBack:()=>void}) {
- const [name,setName]=useState(""),[pais,setPais]=useState(""),[ciudad,setCiudad]=useState(""),[zona,setZona]=useState(""),[direccion,setDireccion]=useState(""),[cocina,setCocina]=useState(""),[precio,setPrecio]=useState(""),[saving,setSaving]=useState(false),[done,setDone]=useState(false),[error,setError]=useState<string|null>(null);
+ const [name,setName]=useState(""),[pais,setPais]=useState(""),[ciudad,setCiudad]=useState(""),[zona,setZona]=useState(""),[direccion,setDireccion]=useState(""),[cocina,setCocina]=useState(""),[antojo,setAntojo]=useState(""),[precio,setPrecio]=useState(""),[saving,setSaving]=useState(false),[done,setDone]=useState(false),[error,setError]=useState<string|null>(null);
  const norm=(v:string)=>v.trim().toLowerCase();
  const matchedPais=paises.find(x=>norm(x.nombre)===norm(pais));
  const cityOptions=matchedPais?ciudades.filter(x=>x.pais_id===matchedPais.id):ciudades;
@@ -168,7 +168,8 @@ function Inscription({paises,ciudades,zonas,onBack}:{paises:Pais[];ciudades:Ciud
      p_direccion:direccion.trim(),
      p_tipo_cocina:cocina.trim()||null,
      p_rango_precio:precio.trim()||null,
-     p_anon_id:anonId()
+     p_anon_id:anonId(),
+     p_especialidades:antojo.trim()?antojo.split(",").map(x=>x.trim()).filter(Boolean):[]
    });
    if(e)setError(e.message);else setDone(true);
    setSaving(false);
@@ -186,7 +187,8 @@ function Inscription({paises,ciudades,zonas,onBack}:{paises:Pais[];ciudades:Ciud
   <datalist id="guiame-zonas">{zoneOptions.slice(0,150).map(x=><option key={x.id} value={x.nombre}/>)}</datalist>
   <p className="lead">Si no aparece en la lista, <strong>escríbela.</strong> No estamos limitados a las zonas precargadas.</p>
   <label>Dirección</label><input value={direccion} onChange={e=>setDireccion(e.target.value)} placeholder="Dirección del restaurante"/>
-  <label>Tipo de cocina</label><input value={cocina} onChange={e=>setCocina(e.target.value)} placeholder="Ej. Panameña, italiana…"/>
+  <label>Tipo de cocina</label><input value={cocina} onChange={e=>setCocina(e.target.value)} placeholder="Ej. Mexicana, italiana, árabe…"/>
+  <label>¿Qué se sirve / cuál es la especialidad?</label><input value={antojo} onChange={e=>setAntojo(e.target.value)} placeholder="Ej. Hamburguesas, tacos, BBQ…"/><p className="lead">Puedes poner varias, separadas por comas.</p>
   <label>Rango de precio</label><input value={precio} onChange={e=>setPrecio(e.target.value)} placeholder="Ej. $20–35 por persona"/>
   {error&&<div className="error">{error}</div>}
   <button className="primary" disabled={!name.trim()||!pais.trim()||!ciudad.trim()||!zona.trim()||!direccion.trim()||saving} onClick={save}>{saving?"ENVIANDO…":"INSCRIBIR RESTAURANTE"}</button>
