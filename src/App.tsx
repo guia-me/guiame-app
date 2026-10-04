@@ -118,15 +118,18 @@ function Results({results,ctx,onBack,onSelect}:{results:Restaurante[];ctx:Contex
  </main></div>
 }
 function Detail({r,ctx,onBack}:{r:Restaurante;ctx:Contexto;onBack:()=>void}){
- const [showEval,setShowEval]=useState(false);
+ const [showEval,setShowEval]=useState(false),[community,setCommunity]=useState<any[]>([]);
+ useEffect(()=>{let live=true;(async()=>{const {data}=await supabase.from("evaluaciones").select("plato,comentario,created_at").eq("restaurante_id",r.id).order("created_at",{ascending:false}).limit(50);if(live)setCommunity(data??[])})();return()=>{live=false}},[r.id]);
  if(showEval) return <Evaluation r={r} ctx={ctx} onBack={()=>setShowEval(false)}/>;
- const m=calcularMatch(r,ctx);
+ const m=calcularMatch(r,ctx), dishes=community.map(x=>(x.plato??"").trim()).filter(Boolean), uniqueDishes=[...new Set(dishes)];
+ const latestComment=community.find(x=>(x.comentario??"").trim())?.comentario?.trim();
  return <div className="app"><header className="top"><button className="back" onClick={onBack}>← Volver a resultados</button><div className="brand">GUÍA<span>·</span>ME</div></header>
  <main className="results"><p className="eyebrow">FICHA DEL RESTAURANTE</p><h1>{r.nombre}</h1><div className="match">{m.match}% MATCH</div>
  <p className="lead">{r.cocina.join(" · ")||"Gastronomía"} · {rangoPrecio(r)} · {ctx.zonaNombre}</p>
  {r.imagen_url&&<img src={r.imagen_url} alt={r.nombre} className="detail-image"/>}
- <section className="detail-section"><h2>Valoración GUÍA·ME</h2><div className="scores"><span>FOOD <b>{r.food_avg??"—"}</b></span><span>DECOR <b>{r.decor_avg??"—"}</b></span><span>SERVICE <b>{r.service_avg??"—"}</b></span></div><p className="why">{m.razones.slice(0,4).map(x=>x.etiqueta+": "+x.detalle).join(" · ")}</p></section>
- <section className="detail-section"><h2>Sobre el restaurante</h2><p>{r.descripcion||"La comunidad de GUÍA·ME está construyendo esta ficha."}</p><p><strong>Precio:</strong> {rangoPrecio(r)} por persona · moneda local</p>{r.platos_recomendados&&<p><strong>Plato recomendado:</strong> {r.platos_recomendados}</p>}<p>{r.direccion||"Dirección pendiente"}</p>{r.telefono&&<p>{r.telefono}</p>}{r.web&&<p><a href={r.web} target="_blank" rel="noreferrer">Visitar sitio web →</a></p>}</section>
+ <section className="detail-section"><h2>VALORACIÓN GUÍA·ME</h2><div className="scores"><span>COCINA <b>{r.food_avg??"—"}/30</b></span><span>DECORACIÓN <b>{r.decor_avg??"—"}/30</b></span><span>SERVICIO <b>{r.service_avg??"—"}/30</b></span><span>PRECIO <b>{r.cost_avg??"—"}/30</b></span></div><p className="why">{m.razones.slice(0,3).map(x=>x.etiqueta+": "+x.detalle).join(" · ")}</p></section>
+ <section className="detail-section"><h2>LA RECOMENDACIÓN</h2><p>{r.descripcion||"Una recomendación construida con la experiencia de la comunidad GUÍA·ME."}</p>{uniqueDishes.length>0&&<><h3>LO QUE PEDIR</h3><p>{uniqueDishes.slice(0,3).map((d,i)=><span key={d}><strong>{d}</strong>{i<Math.min(uniqueDishes.length,3)-1?" · ":""}</span>)}</p></>}{latestComment&&<><h3>EXPERIENCIA DE LA COMUNIDAD</h3><p>“{latestComment}”</p></>}<p className="lead">{community.length} evaluaciones · {uniqueDishes.length} platos mencionados</p></section>
+ <section className="detail-section"><p><strong>Precio:</strong> {rangoPrecio(r)} por persona</p><p>{r.direccion||"Dirección pendiente"}</p>{r.telefono&&<p>{r.telefono}</p>}{r.web&&<p><a href={r.web} target="_blank" rel="noreferrer">Visitar sitio web →</a></p>}</section>
  <button className="primary" type="button" onClick={()=>setShowEval(true)}>EVALUAR ESTE LUGAR</button></main></div>
 }
 
