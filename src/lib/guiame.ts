@@ -69,7 +69,7 @@ export const COCINAS = [
 export const PRESUPUESTOS = [
   { label: "$10–20", min: 10, max: 20 },
   { label: "$20–30", min: 20, max: 30 },
-  { label: "$25–40", min: 25, max: 40 },
+  { label: "$30–40", min: 30, max: 40 },
   { label: "$40–60", min: 40, max: 60 },
   { label: "$60+", min: 60, max: 120 },
 ] as const;
