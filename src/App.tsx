@@ -158,15 +158,15 @@ function Inscription({paises,ciudades,zonas,onBack}:{paises:Pais[];ciudades:Ciud
    if(saving)return;
    if(!name.trim()||!pais.trim()||!ciudad.trim()||!zona.trim()||!direccion.trim()){setError("Completa nombre, país, ciudad, zona y dirección.");return;}
    setSaving(true);setError(null);
-   const {error:e}=await supabase.from("aportes_restaurantes").insert({
-     nombre:name.trim(), pais:pais.trim(), ciudad:ciudad.trim(), zona:zona.trim(),
-     direccion:direccion.trim(), tipo_cocina:cocina.trim()||null, rango_precio:precio.trim()||null,
-     estado:"pendiente", anon_id:anonId(),
-     payload:{
-       pais_id:matchedPais?.id??null, ciudad_id:matchedCiudad?.id??null, zona_id:matchedZona?.id??null,
-       pais_nombre:pais.trim(), ciudad_nombre:ciudad.trim(), zona_nombre:zona.trim(),
-       ubicacion_estado:matchedZona?"zona_existente":"zona_nueva_pendiente"
-     }
+   const {error:e}=await supabase.rpc("registrar_aporte_restaurante",{
+     p_nombre:name.trim(),
+     p_pais:pais.trim(),
+     p_ciudad:ciudad.trim(),
+     p_zona:zona.trim(),
+     p_direccion:direccion.trim(),
+     p_tipo_cocina:cocina.trim()||null,
+     p_rango_precio:precio.trim()||null,
+     p_anon_id:anonId()
    });
    if(e)setError(e.message);else setDone(true);
    setSaving(false);
