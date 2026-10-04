@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "./integrations/supabase/client";
 import {
   AMBIENTES, ANTOJOS, COCINAS, CON_QUIEN, PERSONAS, PRESUPUESTOS,
-  anonId, alternarFavorito, calcularMatch, contextoVacio, guardarContexto, leerContexto, leerFavoritos, rangoPrecio,
+  anonId, alternarFavorito, calcularMatch, contextoVacio, guardarContexto, leerContexto, leerFavoritos, rangoPrecio, distanciaKm,
   type Contexto, type Restaurante,
 } from "./lib/guiame";
 
@@ -76,7 +76,8 @@ export default function App() {
       }
       if(e)throw e;
       const rs=data.map(clean);
-      const ranked=rs.map(r=>({r,m:calcularMatch(r,ctx).match})).sort((a,b)=>b.m-a.m).map(x=>x.r);
+      const ranked=rs.map(r=>({r,m:calcularMatch(r,ctx).match,dist:(ctx.usarUbicacion&&ctx.lat!=null&&ctx.lng!=null&&r.lat!=null&&r.lng!=null)?distanciaKm(ctx.lat,ctx.lng,r.lat,r.lng):null}))
+        .sort((a,b)=>b.m-a.m || ((a.dist??Infinity)-(b.dist??Infinity))).map(x=>x.r);
       guardarContexto(ctx);setResults(ranked);setScreen("results");
     }catch(e){setError(e instanceof Error?e.message:String(e));}
     finally{setSearching(false)}
@@ -101,9 +102,9 @@ export default function App() {
         {error&&<div className="error">{error}</div>}
         {loading?<div className="loading">Cargando lugares…</div>:<>
           <label>País</label>
-          <div className="chips">{paises.map(p=><button key={p.id} className={ctx.paisId===p.id?"chip active":"chip"} onClick={()=>set({paisId:p.id,paisNombre:p.nombre,ciudadId:null,ciudadNombre:undefined,zonaId:null,zonaNombre:undefined})}>{p.nombre}</button>)}</div>
-          {ctx.paisId&&<><label>Ciudad</label><select value={ctx.ciudadId??""} onChange={e=>{const x=cities.find(v=>v.id===e.target.value);set({ciudadId:e.target.value||null,ciudadNombre:x?.nombre,zonaId:null,zonaNombre:undefined})}}><option value="">Selecciona una ciudad</option>{cities.map(x=><option key={x.id} value={x.id}>{x.nombre}</option>)}</select></>}
-          {ctx.ciudadId&&<><label>Zona</label><select value={ctx.zonaId??""} onChange={e=>{const x=zones.find(v=>v.id===e.target.value);set({zonaId:e.target.value||null,zonaNombre:x?.nombre})}}><option value="">Selecciona una zona</option>{zones.map(x=><option key={x.id} value={x.id}>{x.nombre}</option>)}</select></>}
+          <div className="chips">{paises.map(p=><button key={p.id} className={ctx.paisId===p.id?"chip active":"chip"} onClick={()=>set({paisId:p.id,paisNombre:p.nombre,ciudadId:null,ciudadNombre:undefined,zonaId:null,zonaNombre:undefined,usarUbicacion:false,lat:null,lng:null})}>{p.nombre}</button>)}</div>
+          {ctx.paisId&&<><label>Ciudad</label><select value={ctx.ciudadId??""} onChange={e=>{const x=cities.find(v=>v.id===e.target.value);set({ciudadId:e.target.value||null,ciudadNombre:x?.nombre,zonaId:null,zonaNombre:undefined,usarUbicacion:false,lat:null,lng:null})}}><option value="">Selecciona una ciudad</option>{cities.map(x=><option key={x.id} value={x.id}>{x.nombre}</option>)}</select></>}
+          {ctx.ciudadId&&<><label>Zona</label><select value={ctx.zonaId??""} onChange={e=>{const x=zones.find(v=>v.id===e.target.value);set({zonaId:e.target.value||null,zonaNombre:x?.nombre,usarUbicacion:false,lat:null,lng:null})}}><option value="">Selecciona una zona</option>{zones.map(x=><option key={x.id} value={x.id}>{x.nombre}</option>)}</select></>}
           {ctx.zonaId&&<Filters ctx={ctx} set={set}/>}
           <div className="location-box">
             <button className={ctx.usarUbicacion?"secondary active-location":"secondary"} type="button" onClick={()=>{
@@ -139,7 +140,7 @@ function Filters({ctx,set}:{ctx:Contexto;set:(x:Partial<Contexto>)=>void}){
 
 function Results({results,ctx,onBack,onSelect}:{results:Restaurante[];ctx:Contexto;onBack:()=>void;onSelect:(r:Restaurante)=>void}){
  return <div className="app"><header className="top"><button className="back" onClick={onBack}>← Cambiar búsqueda</button><div className="brand">GUÍA<span>·</span>ME</div></header>
- <main className="results"><p className="eyebrow">TU SELECCIÓN</p><h1>Estos son tus<br/><em>mejores matches.</em></h1><p className="lead">{ctx.zonaNombre} · {ctx.ciudadNombre} · {results.length} restaurantes encontrados</p>
+ <main className="results"><p className="eyebrow">TU SELECCIÓN</p><h1>Estos son tus<br/><em>mejores matches.</em></h1><p className="lead">{ctx.zonaNombre ?? "Cerca de ti"}{ctx.ciudadNombre ? ` · ${ctx.ciudadNombre}` : ""} · {results.length} restaurantes encontrados</p>
  {results.length===0?<div className="empty"><h2>Aún no tenemos restaurantes aquí.</h2><p>La comunidad puede ayudarnos a construir esta zona.</p></div>:<div className="cards">{results.slice(0,3).map((r,i)=>{const m=calcularMatch(r,ctx);return <article className="restaurant" key={r.id} role="button" tabIndex={0} onClick={()=>onSelect(r)} onKeyDown={e=>{if(e.key==="Enter"||e.key===" ")onSelect(r)}}><div className="rank">0{i+1}</div><div className="rbody"><div className="match">{m.match}% MATCH</div><h2>{r.nombre}</h2><p className="meta">{r.cocina.join(" · ")||"Gastronomía"} · {rangoPrecio(r)}</p><div className="scores"><span>COCINA <b>{r.food_avg??"—"}/30</b></span><span>DECOR <b>{r.decor_avg??"—"}/30</b></span><span>SERVICIO <b>{r.service_avg??"—"}/30</b></span><span>PRECIO <b>{r.cost_avg??"—"}/30</b></span></div><p className="why">{m.razones.slice(0,3).map(x=>x.etiqueta+": "+x.detalle).join(" · ")}</p></div></article>})}</div>}
  </main></div>
 }
