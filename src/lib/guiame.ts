@@ -9,6 +9,7 @@ export type Restaurante = {
   zona_id: string;
   direccion: string | null;
   cocina: string[];
+  especialidades?: string[];
   precio_min: number | null;
   precio_max: number | null;
   ambiente: string[];
@@ -45,6 +46,9 @@ export const AMBIENTES = [
   "Animado",
   "Tranquilo",
 ] as const;
+export const ANTOJOS = [
+  "Hamburguesas","Tacos","Pizza","Sushi","BBQ","Steak","Pasta","Ceviche","Ramen","Pollo","Mariscos","Brunch","Café","Postres","Alitas","Sandwiches","Burritos","Empanadas","Arepas","Poke","Helados",
+] as const;
 export const COCINAS = [
   "Panameña",
   "Criolla",
@@ -79,6 +83,7 @@ export type Contexto = {
   cocinas: string[];
   presupuesto: string | null;
   ambientes: string[];
+  antojos: string[];
   usarUbicacion: boolean;
   lat: number | null;
   lng: number | null;
@@ -96,6 +101,7 @@ export const contextoVacio: Contexto = {
   cocinas: [],
   presupuesto: null,
   ambientes: [],
+  antojos: [],
   usarUbicacion: false,
   lat: null,
   lng: null,
@@ -179,7 +185,8 @@ export function distanciaKm(
 export const PESOS_MATCH = {
   zona: 30,
   presupuesto: 20,
-  cocina: 20,
+  cocina: 10,
+  antojo: 10,
   salida: 15,
   ambiente: 10,
   personas: 5,
@@ -255,7 +262,7 @@ export function calcularMatch(r: Restaurante, c: Contexto): ResultadoMatch {
   }
   total += pPresu;
 
-  // Cocina (20)
+  // Cocina (10)
   let pCocina = 0;
   if (c.cocinas.length === 0) {
     pCocina = PESOS_MATCH.cocina * 0.5;
@@ -284,6 +291,34 @@ export function calcularMatch(r: Restaurante, c: Contexto): ResultadoMatch {
     }
   }
   total += pCocina;
+
+  // Antojo / especialidad (10). No mezcla identidades gastronómicas: busca lo que quieres comer.
+  let pAntojo = 0;
+  if (!c.antojos || c.antojos.length === 0) {
+    pAntojo = PESOS_MATCH.antojo * 0.5;
+  } else {
+    const normalizarAntojo = (x: string) => x.normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").trim().toLowerCase();
+    const aliases: Record<string, string[]> = {
+      hamburguesas: ["hamburguesa", "hamburguesas", "burger", "burgers"],
+      tacos: ["taco", "tacos"], pizza: ["pizza"], sushi: ["sushi"],
+      bbq: ["bbq", "barbecue", "barbacoa"], steak: ["steak", "steakhouse", "carne"],
+      pasta: ["pasta"], ceviche: ["ceviche"], ramen: ["ramen"], pollo: ["pollo"],
+      mariscos: ["mariscos", "seafood"], brunch: ["brunch"], cafe: ["cafe", "café"],
+      postres: ["postre", "postres", "dessert", "desserts"], alitas: ["alitas", "wings"],
+      sandwiches: ["sandwich", "sandwiches", "sándwich"], burritos: ["burrito", "burritos"],
+      empanadas: ["empanada", "empanadas"], arepas: ["arepa", "arepas"], poke: ["poke"], helados: ["helado", "helados", "ice cream"],
+    };
+    const coincideAntojo = (rest: string, buscada: string) => {
+      const a = normalizarAntojo(rest), b = normalizarAntojo(buscada);
+      if (a === b || a.includes(b) || b.includes(a)) return true;
+      return !!aliases[b]?.some(x => a === x || a.includes(x) || x.includes(a));
+    };
+    const disponibles = [...(r.especialidades ?? []), r.platos_recomendados ?? ""].filter(Boolean);
+    const hits = c.antojos.filter(a => disponibles.some(x => coincideAntojo(x, a)));
+    pAntojo = hits.length ? PESOS_MATCH.antojo : 0;
+    if (hits.length) razones.push({ etiqueta: "Antojo", detalle: `Buscas ${hits.join(", ")}`, puntos: pAntojo, de: PESOS_MATCH.antojo });
+  }
+  total += pAntojo;
 
   // Tipo de salida (15) — combina el dato de ficha con la señal de comunidad.
   let pSalida = 0;
