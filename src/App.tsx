@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "./integrations/supabase/client";
 import {
   AMBIENTES, COCINAS, CON_QUIEN, PERSONAS, PRESUPUESTOS,
-  calcularMatch, contextoVacio, guardarContexto, leerContexto, rangoPrecio,
+  anonId, calcularMatch, contextoVacio, guardarContexto, leerContexto, rangoPrecio,
   type Contexto, type Restaurante,
 } from "./lib/guiame";
 
