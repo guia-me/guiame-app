@@ -53,6 +53,7 @@ export const COCINAS = [
   "Japonesa",
   "Asiática",
   "Parrilla",
+  "BBQ",
   "Argentina",
   "Internacional",
   "Fusión",
@@ -259,7 +260,19 @@ export function calcularMatch(r: Restaurante, c: Contexto): ResultadoMatch {
   if (c.cocinas.length === 0) {
     pCocina = PESOS_MATCH.cocina * 0.5;
   } else {
-    const coincidencias = r.cocina.filter((x) => c.cocinas.includes(x));
+    const normalizar = (x: string) => x.normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").trim().toLowerCase();
+    const equivalentes: Record<string, string[]> = {
+      bbq: ["bbq", "barbecue", "barbacoa", "parrilla", "grill"],
+      parrilla: ["parrilla", "bbq", "barbecue", "barbacoa", "grill"],
+      mariscos: ["mariscos", "seafood"],
+    };
+    const coincide = (rest: string, buscada: string) => {
+      const a = normalizar(rest), b = normalizar(buscada);
+      if (a === b) return true;
+      const grupo = equivalentes[b];
+      return !!grupo?.some((alias) => a === alias || a.includes(alias) || alias.includes(a));
+    };
+    const coincidencias = r.cocina.filter((x) => c.cocinas.some((buscada) => coincide(x, buscada)));
     pCocina = coincidencias.length > 0 ? PESOS_MATCH.cocina : 0;
     if (coincidencias.length > 0) {
       razones.push({
