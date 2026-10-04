@@ -75,6 +75,7 @@ export const PRESUPUESTOS = [
 ] as const;
 
 export type Contexto = {
+  modoBusqueda: "restaurante" | "antojo";
   conQuien: string | null;
   personas: string | null;
   paisId: string | null;
@@ -93,6 +94,7 @@ export type Contexto = {
 };
 
 export const contextoVacio: Contexto = {
+  modoBusqueda: "restaurante",
   conQuien: null,
   personas: null,
   paisId: null,
