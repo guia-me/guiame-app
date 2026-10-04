@@ -145,4 +145,48 @@ async function save(){if(saving)return;setSaving(true);setError(null);try{const 
 if(done)return <div className="app"><main className="results"><p className="eyebrow">GRACIAS</p><h1>Tu experiencia<br/><em>ya es parte de GUÍA·ME.</em></h1><p className="lead">Tu evaluación alimentará las próximas recomendaciones.</p><button className="primary" onClick={onBack}>VOLVER</button></main></div>;
 return <div className="app"><header className="top"><button className="back" onClick={onBack}>← Cancelar</button><div className="brand">GUÍA<span>·</span>ME</div></header><main className="results"><p className="eyebrow">EVALÚA TU EXPERIENCIA</p><h1>{r.nombre}</h1><p className="lead">Valora cada dimensión de 0 a 30. Tu experiencia es parte del motor de GUÍA·ME.</p><Score label="Cocina" value={food} setValue={setFood}/><Score label="Decoración" value={decor} setValue={setDecor}/><Score label="Servicio" value={service} setValue={setService}/><Score label="Precio" value={cost} setValue={setCost}/><div className="detail-section"><label>¿Cuánto pagaste? ({currency(ctx.paisNombre)})</label><input value={precio} onChange={e=>setPrecio(e.target.value)} inputMode="decimal" placeholder="Ej. 28.50"/><label>Plato que probaste</label><input value={plato} onChange={e=>setPlato(e.target.value)} placeholder="Ej. Ceviche de corvina"/><label>Comentario</label><textarea value={comentario} onChange={e=>setComentario(e.target.value)} rows={4} placeholder="Tu experiencia…"/></div>{error&&<div className="error">{error}</div>}<button className="primary" disabled={saving} onClick={save}>{saving?"GUARDANDO…":"PUBLICAR MI EVALUACIÓN"}</button></main></div>}
 function currency(p?:string){const x=(p??"").toLowerCase();if(x.includes("chile"))return"CLP";if(x.includes("méxico")||x.includes("mexico"))return"MXN";if(x.includes("panamá")||x.includes("panama"))return"USD";return"moneda local"}
-function Inscription({paises,ciudades,zonas,onBack}:{paises:Pais[];ciudades:Ciudad[];zonas:Zona[];onBack:()=>void}){const [name,setName]=useState(""),[pais,setPais]=useState(""),[ciudad,setCiudad]=useState(""),[zona,setZona]=useState(""),[direccion,setDireccion]=useState(""),[cocina,setCocina]=useState(""),[precio,setPrecio]=useState(""),[saving,setSaving]=useState(false),[done,setDone]=useState(false),[error,setError]=useState<string|null>(null);const cs=ciudades.filter(x=>x.pais_id===pais),zs=zonas.filter(x=>x.ciudad_id===ciudad);async function save(){setSaving(true);const p=paises.find(x=>x.id===pais),c=cs.find(x=>x.id===ciudad),z=zs.find(x=>x.id===zona);const {error:e}=await supabase.from("aportes_restaurantes").insert({nombre:name,pais:p?.nombre??null,ciudad:c?.nombre??null,zona:z?.nombre??null,direccion:direccion||null,tipo_cocina:cocina||null,rango_precio:precio||null,estado:"pendiente",anon_id:anonId(),payload:{pais_id:pais,ciudad_id:ciudad,zona_id:zona}});if(e)setError(e.message);else setDone(true);setSaving(false)}if(done)return <div className="app"><main className="results"><p className="eyebrow">GRACIAS</p><h1>Restaurante<br/><em>inscrito.</em></h1><p className="lead">Quedó pendiente de verificación y podrá ser enriquecido por la comunidad.</p><button className="primary" onClick={onBack}>VOLVER A INICIO</button></main></div>;return <div className="app"><header className="top"><button className="back" onClick={onBack}>← Volver</button><div className="brand">GUÍA<span>·</span>ME</div></header><main className="results"><p className="eyebrow">APORTE DE LA COMUNIDAD</p><h1>Inscribir<br/><em>restaurante.</em></h1><p className="lead">No necesitas ser el dueño. Cualquier usuario puede inscribirlo.</p><div className="card"><label>Nombre</label><input value={name} onChange={e=>setName(e.target.value)} placeholder="Nombre del restaurante"/><label>País</label><select value={pais} onChange={e=>{setPais(e.target.value);setCiudad("");setZona("")}}><option value="">Selecciona</option>{paises.map(x=><option key={x.id} value={x.id}>{x.nombre}</option>)}</select><label>Ciudad</label><select value={ciudad} onChange={e=>{setCiudad(e.target.value);setZona("")}}><option value="">Selecciona</option>{cs.map(x=><option key={x.id} value={x.id}>{x.nombre}</option>)}</select><label>Zona</label><select value={zona} onChange={e=>setZona(e.target.value)}><option value="">Selecciona</option>{zs.map(x=><option key={x.id} value={x.id}>{x.nombre}</option>)}</select><label>Dirección</label><input value={direccion} onChange={e=>setDireccion(e.target.value)} placeholder="Opcional"/><label>Tipo de cocina</label><input value={cocina} onChange={e=>setCocina(e.target.value)} placeholder="Ej. Panameña, italiana…"/><label>Rango de precio</label><input value={precio} onChange={e=>setPrecio(e.target.value)} placeholder="Ej. $20–35 por persona"/>{error&&<div className="error">{error}</div>}<button className="primary" disabled={!name||!pais||!ciudad||!zona||saving} onClick={save}>{saving?"ENVIANDO…":"INSCRIBIR RESTAURANTE"}</button></div></main></div>}
+function Inscription({paises,ciudades,zonas,onBack}:{paises:Pais[];ciudades:Ciudad[];zonas:Zona[];onBack:()=>void}) {
+ const [name,setName]=useState(""),[pais,setPais]=useState(""),[ciudad,setCiudad]=useState(""),[zona,setZona]=useState(""),[direccion,setDireccion]=useState(""),[cocina,setCocina]=useState(""),[precio,setPrecio]=useState(""),[saving,setSaving]=useState(false),[done,setDone]=useState(false),[error,setError]=useState<string|null>(null);
+ const norm=(v:string)=>v.trim().toLowerCase();
+ const matchedPais=paises.find(x=>norm(x.nombre)===norm(pais));
+ const cityOptions=matchedPais?ciudades.filter(x=>x.pais_id===matchedPais.id):ciudades;
+ const matchedCiudad=cityOptions.find(x=>norm(x.nombre)===norm(ciudad));
+ const zoneOptions=matchedCiudad?zonas.filter(x=>x.ciudad_id===matchedCiudad.id):zonas;
+ const matchedZona=zoneOptions.find(x=>norm(x.nombre)===norm(zona));
+
+ async function save(){
+   if(saving)return;
+   if(!name.trim()||!pais.trim()||!ciudad.trim()||!zona.trim()||!direccion.trim()){setError("Completa nombre, país, ciudad, zona y dirección.");return;}
+   setSaving(true);setError(null);
+   const {error:e}=await supabase.from("aportes_restaurantes").insert({
+     nombre:name.trim(), pais:pais.trim(), ciudad:ciudad.trim(), zona:zona.trim(),
+     direccion:direccion.trim(), tipo_cocina:cocina.trim()||null, rango_precio:precio.trim()||null,
+     estado:"pendiente", anon_id:anonId(),
+     payload:{
+       pais_id:matchedPais?.id??null, ciudad_id:matchedCiudad?.id??null, zona_id:matchedZona?.id??null,
+       pais_nombre:pais.trim(), ciudad_nombre:ciudad.trim(), zona_nombre:zona.trim(),
+       ubicacion_estado:matchedZona?"zona_existente":"zona_nueva_pendiente"
+     }
+   });
+   if(e)setError(e.message);else setDone(true);
+   setSaving(false);
+ }
+ if(done)return <div className="app"><main className="results"><p className="eyebrow">GRACIAS</p><h1>Restaurante<br/><em>inscrito.</em></h1><p className="lead">Quedó pendiente de verificación. Si la zona no existía, también quedó propuesta para incorporarla a GUÍA·ME.</p><button className="primary" onClick={onBack}>VOLVER A INICIO</button></main></div>;
+ return <div className="app"><header className="top"><button className="back" onClick={onBack}>← Volver</button><div className="brand">GUÍA<span>·</span>ME</div></header>
+ <main className="results"><p className="eyebrow">APORTE DE LA COMUNIDAD</p><h1>Inscribir<br/><em>restaurante.</em></h1><p className="lead">Puedes inscribir un restaurante en cualquier país, ciudad o zona. Si el lugar no existe todavía, GUÍA·ME lo recibe como propuesta.</p>
+ <div className="card">
+  <label>Nombre</label><input value={name} onChange={e=>setName(e.target.value)} placeholder="Nombre del restaurante"/>
+  <label>País</label><input list="guiame-paises" value={pais} onChange={e=>setPais(e.target.value)} placeholder="Ej. Panamá, España, Perú…"/>
+  <datalist id="guiame-paises">{paises.map(x=><option key={x.id} value={x.nombre}/>)}</datalist>
+  <label>Ciudad</label><input list="guiame-ciudades" value={ciudad} onChange={e=>setCiudad(e.target.value)} placeholder="Ej. Panamá, Madrid, Lima…"/>
+  <datalist id="guiame-ciudades">{cityOptions.slice(0,100).map(x=><option key={x.id} value={x.nombre}/>)}</datalist>
+  <label>Zona</label><input list="guiame-zonas" value={zona} onChange={e=>setZona(e.target.value)} placeholder="Ej. Ancón, Miraflores, Malasaña…"/>
+  <datalist id="guiame-zonas">{zoneOptions.slice(0,150).map(x=><option key={x.id} value={x.nombre}/>)}</datalist>
+  <p className="lead">Si no aparece en la lista, <strong>escríbela.</strong> No estamos limitados a las zonas precargadas.</p>
+  <label>Dirección</label><input value={direccion} onChange={e=>setDireccion(e.target.value)} placeholder="Dirección del restaurante"/>
+  <label>Tipo de cocina</label><input value={cocina} onChange={e=>setCocina(e.target.value)} placeholder="Ej. Panameña, italiana…"/>
+  <label>Rango de precio</label><input value={precio} onChange={e=>setPrecio(e.target.value)} placeholder="Ej. $20–35 por persona"/>
+  {error&&<div className="error">{error}</div>}
+  <button className="primary" disabled={!name.trim()||!pais.trim()||!ciudad.trim()||!zona.trim()||!direccion.trim()||saving} onClick={save}>{saving?"ENVIANDO…":"INSCRIBIR RESTAURANTE"}</button>
+ </div></main></div>
+}
