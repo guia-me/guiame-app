@@ -24,7 +24,8 @@ const clean = (v:any): Restaurante => ({
 });
 
 export default function App() {
-  const [screen,setScreen]=useState<"home"|"results">("home");
+  const [screen,setScreen]=useState<"home"|"results"|"detail">("home");
+  const [selected,setSelected]=useState<Restaurante|null>(null);
   const [ctx,setCtx]=useState<Contexto>(()=>leerContexto() ?? contextoVacio);
   const [paises,setPaises]=useState<Pais[]>([]);
   const [ciudades,setCiudades]=useState<Ciudad[]>([]);
@@ -69,7 +70,8 @@ export default function App() {
     finally{setSearching(false)}
   }
 
-  if(screen==="results") return <Results results={results} ctx={ctx} onBack={()=>setScreen("home")}/>;
+  if(screen==="results") return <Results results={results} ctx={ctx} onBack={()=>setScreen("home")} onSelect={(r)=>{setSelected(r);setScreen("detail")}}/>;
+  if(screen==="detail" && selected) return <Detail r={selected} ctx={ctx} onBack={()=>setScreen("results")}/>;
 
   return <div className="app">
     <header className="top"><div className="brand">GUÍA<span>·</span>ME</div><div className="tag">COME MEJOR. DECIDE MEJOR.</div></header>
@@ -106,9 +108,19 @@ function Filters({ctx,set}:{ctx:Contexto;set:(x:Partial<Contexto>)=>void}){
  </div>
 }
 
-function Results({results,ctx,onBack}:{results:Restaurante[];ctx:Contexto;onBack:()=>void}){
+function Results({results,ctx,onBack,onSelect}:{results:Restaurante[];ctx:Contexto;onBack:()=>void;onSelect:(r:Restaurante)=>void}){
  return <div className="app"><header className="top"><button className="back" onClick={onBack}>← Cambiar búsqueda</button><div className="brand">GUÍA<span>·</span>ME</div></header>
  <main className="results"><p className="eyebrow">TU SELECCIÓN</p><h1>Estos son tus<br/><em>mejores matches.</em></h1><p className="lead">{ctx.zonaNombre} · {ctx.ciudadNombre} · {results.length} restaurantes encontrados</p>
- {results.length===0?<div className="empty"><h2>Aún no tenemos restaurantes aquí.</h2><p>La comunidad puede ayudarnos a construir esta zona.</p></div>:<div className="cards">{results.slice(0,3).map((r,i)=>{const m=calcularMatch(r,ctx);return <article className="restaurant" key={r.id}><div className="rank">0{i+1}</div><div className="rbody"><div className="match">{m.match}% MATCH</div><h2>{r.nombre}</h2><p className="meta">{r.cocina.join(" · ")||"Gastronomía"} · {rangoPrecio(r)}</p><div className="scores"><span>FOOD <b>{r.food_avg??"—"}</b></span><span>DECOR <b>{r.decor_avg??"—"}</b></span><span>SERVICE <b>{r.service_avg??"—"}</b></span></div><p className="why">{m.razones.slice(0,3).map(x=>x.etiqueta+": "+x.detalle).join(" · ")}</p></div></article>})}</div>}
+ {results.length===0?<div className="empty"><h2>Aún no tenemos restaurantes aquí.</h2><p>La comunidad puede ayudarnos a construir esta zona.</p></div>:<div className="cards">{results.slice(0,3).map((r,i)=>{const m=calcularMatch(r,ctx);return <article className="restaurant" key={r.id} role="button" tabIndex={0} onClick={()=>onSelect(r)} onKeyDown={e=>{if(e.key==="Enter"||e.key===" ")onSelect(r)}}><div className="rank">0{i+1}</div><div className="rbody"><div className="match">{m.match}% MATCH</div><h2>{r.nombre}</h2><p className="meta">{r.cocina.join(" · ")||"Gastronomía"} · {rangoPrecio(r)}</p><div className="scores"><span>FOOD <b>{r.food_avg??"—"}</b></span><span>DECOR <b>{r.decor_avg??"—"}</b></span><span>SERVICE <b>{r.service_avg??"—"}</b></span></div><p className="why">{m.razones.slice(0,3).map(x=>x.etiqueta+": "+x.detalle).join(" · ")}</p></div></article>})}</div>}
  </main></div>
+}
+function Detail({r,ctx,onBack}:{r:Restaurante;ctx:Contexto;onBack:()=>void}){
+ const m=calcularMatch(r,ctx);
+ return <div className="app"><header className="top"><button className="back" onClick={onBack}>← Volver a resultados</button><div className="brand">GUÍA<span>·</span>ME</div></header>
+ <main className="results"><p className="eyebrow">FICHA DEL RESTAURANTE</p><h1>{r.nombre}</h1><div className="match">{m.match}% MATCH</div>
+ <p className="lead">{r.cocina.join(" · ")||"Gastronomía"} · {rangoPrecio(r)} · {ctx.zonaNombre}</p>
+ {r.imagen_url&&<img src={r.imagen_url} alt={r.nombre} className="detail-image"/>}
+ <section className="detail-section"><h2>Valoración GUÍA·ME</h2><div className="scores"><span>FOOD <b>{r.food_avg??"—"}</b></span><span>DECOR <b>{r.decor_avg??"—"}</b></span><span>SERVICE <b>{r.service_avg??"—"}</b></span></div><p className="why">{m.razones.slice(0,4).map(x=>x.etiqueta+": "+x.detalle).join(" · ")}</p></section>
+ <section className="detail-section"><h2>Información</h2><p>{r.direccion||"Dirección pendiente"}</p>{r.telefono&&<p>{r.telefono}</p>}{r.web&&<p><a href={r.web} target="_blank" rel="noreferrer">Visitar sitio web →</a></p>}</section>
+ <button className="primary" type="button" onClick={()=>alert("La evaluación se habilitará en el siguiente módulo de GUÍA·ME.")}>EVALUAR ESTE LUGAR</button></main></div>
 }
