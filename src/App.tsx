@@ -25,7 +25,7 @@ const clean = (v:any): Restaurante => ({
 });
 
 export default function App() {
-  const [screen,setScreen]=useState<"home"|"results"|"detail"|"inscribe">("home");
+  const [screen,setScreen]=useState<"home"|"results"|"detail"|"inscribe"|"favorites">("home");
   const [selected,setSelected]=useState<Restaurante|null>(null);
   const [ctx,setCtx]=useState<Contexto>(()=>leerContexto() ?? contextoVacio);
   const [paises,setPaises]=useState<Pais[]>([]);
