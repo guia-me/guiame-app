@@ -59,13 +59,23 @@ export default function App() {
   const set=(patch:Partial<Contexto>)=>setCtx(x=>({...x,...patch}));
 
   async function buscar(){
-    if(!ctx.paisId||!ctx.ciudadId||!ctx.zonaId)return;
+    if(!ctx.zonaId && !(ctx.usarUbicacion && ctx.lat != null && ctx.lng != null))return;
     setSearching(true);setError(null);
     try{
-      const {data,error:e}=await supabase.from("restaurantes").select("*")
-        .eq("pais_id",ctx.paisId).eq("ciudad_id",ctx.ciudadId).eq("zona_id",ctx.zonaId).limit(100);
+      let data:any[]=[]; let e:any=null;
+      if(ctx.usarUbicacion && ctx.lat != null && ctx.lng != null){
+        const q=await supabase.from("restaurantes").select("*")
+          .not("lat","is",null).not("lng","is",null)
+          .gte("lat",ctx.lat-0.15).lte("lat",ctx.lat+0.15)
+          .gte("lng",ctx.lng-0.18).lte("lng",ctx.lng+0.18).limit(300);
+        data=q.data??[]; e=q.error;
+      }else{
+        const q=await supabase.from("restaurantes").select("*")
+          .eq("pais_id",ctx.paisId).eq("ciudad_id",ctx.ciudadId).eq("zona_id",ctx.zonaId).limit(100);
+        data=q.data??[]; e=q.error;
+      }
       if(e)throw e;
-      const rs=(data??[]).map(clean);
+      const rs=data.map(clean);
       const ranked=rs.map(r=>({r,m:calcularMatch(r,ctx).match})).sort((a,b)=>b.m-a.m).map(x=>x.r);
       guardarContexto(ctx);setResults(ranked);setScreen("results");
     }catch(e){setError(e instanceof Error?e.message:String(e));}
@@ -95,7 +105,20 @@ export default function App() {
           {ctx.paisId&&<><label>Ciudad</label><select value={ctx.ciudadId??""} onChange={e=>{const x=cities.find(v=>v.id===e.target.value);set({ciudadId:e.target.value||null,ciudadNombre:x?.nombre,zonaId:null,zonaNombre:undefined})}}><option value="">Selecciona una ciudad</option>{cities.map(x=><option key={x.id} value={x.id}>{x.nombre}</option>)}</select></>}
           {ctx.ciudadId&&<><label>Zona</label><select value={ctx.zonaId??""} onChange={e=>{const x=zones.find(v=>v.id===e.target.value);set({zonaId:e.target.value||null,zonaNombre:x?.nombre})}}><option value="">Selecciona una zona</option>{zones.map(x=><option key={x.id} value={x.id}>{x.nombre}</option>)}</select></>}
           {ctx.zonaId&&<Filters ctx={ctx} set={set}/>}
-          <button className="primary" disabled={!ctx.paisId||!ctx.ciudadId||!ctx.zonaId||searching} onClick={buscar}>{searching?"CALCULANDO MATCH…":"ENCONTRAR MI MATCH →"}</button>
+          <div className="location-box">
+            <button className={ctx.usarUbicacion?"secondary active-location":"secondary"} type="button" onClick={()=>{
+              if(!navigator.geolocation){setError("Tu navegador no permite geolocalización.");return;}
+              setError(null);
+              navigator.geolocation.getCurrentPosition(
+                pos=>set({usarUbicacion:true,lat:pos.coords.latitude,lng:pos.coords.longitude,zonaId:null,zonaNombre:"Cerca de ti"}),
+                err=>setError(err.code===1?"Permite el acceso a tu ubicación para buscar restaurantes cerca de ti.":"No pudimos obtener tu ubicación. Puedes elegir una zona manualmente."),
+                {enableHighAccuracy:true,timeout:10000,maximumAge:300000}
+              );
+            }}>📍 {ctx.usarUbicacion?"UBICACIÓN ACTIVADA":"USAR MI UBICACIÓN"}</button>
+            {ctx.usarUbicacion&&<p className="location-note">Buscaremos restaurantes cercanos y los ordenaremos por MATCH + distancia.</p>}
+          </div>
+          {ctx.usarUbicacion&&<Filters ctx={ctx} set={set}/>}
+          <button className="primary" disabled={(!ctx.zonaId && !(ctx.usarUbicacion&&ctx.lat!=null&&ctx.lng!=null))||searching} onClick={buscar}>{searching?"CALCULANDO MATCH…":"ENCONTRAR MI MATCH →"}</button>
           <button className="secondary" onClick={()=>setScreen("inscribe")}>＋ INSCRIBIR RESTAURANTE</button>
         </>}
       </section>
@@ -110,7 +133,6 @@ function Filters({ctx,set}:{ctx:Contexto;set:(x:Partial<Contexto>)=>void}){
   <label>¿Con quién?</label><div className="chips">{CON_QUIEN.map(x=><button key={x} className={ctx.conQuien===x?"chip active":"chip"} onClick={()=>set({conQuien:ctx.conQuien===x?null:x})}>{x}</button>)}</div>
   <label>¿Cuántos?</label><div className="chips">{PERSONAS.map(x=><button key={x} className={ctx.personas===x?"chip active":"chip"} onClick={()=>set({personas:ctx.personas===x?null:x})}>{x}</button>)}</div>
   <label>Presupuesto por persona</label><div className="chips">{PRESUPUESTOS.map(x=><button key={x.label} className={ctx.presupuesto===x.label?"chip active":"chip"} onClick={()=>set({presupuesto:x.label})}>{x.label}</button>)}</div>
-  <label>Cocina</label><div className="chips">{COCINAS.slice(0,8).map(x=><button key={x} className={ctx.cocinas.includes(x)?"chip active":"chip"} onClick={()=>set({cocinas:ctx.cocinas.includes(x)?ctx.cocinas.filter(v=>v!==x):[...ctx.cocinas,x]})}>{x}</button>)}</div>
   <label>Ambiente</label><div className="chips">{AMBIENTES.map(x=><button key={x} className={ctx.ambientes.includes(x)?"chip active":"chip"} onClick={()=>set({ambientes:ctx.ambientes.includes(x)?ctx.ambientes.filter(v=>v!==x):[...ctx.ambientes,x]})}>{x}</button>)}</div>
  </div>
 }
@@ -139,6 +161,13 @@ function Detail({r,ctx,favorite,onToggleFavorite,onBack}:{r:Restaurante;ctx:Cont
  <section className="detail-section"><h2>VALORACIÓN GUÍA·ME</h2><div className="scores"><span>COCINA <b>{r.food_avg??"—"}/30</b></span><span>DECORACIÓN <b>{r.decor_avg??"—"}/30</b></span><span>SERVICIO <b>{r.service_avg??"—"}/30</b></span><span>PRECIO <b>{r.cost_avg??"—"}/30</b></span></div><p className="why">{m.razones.slice(0,3).map(x=>x.etiqueta+": "+x.detalle).join(" · ")}</p></section>
  <section className="detail-section"><h2>LA RECOMENDACIÓN</h2><p>{recommendation}</p>{uniqueDishes.length>0&&<><h3>LO QUE PEDIR</h3><p>{uniqueDishes.slice(0,3).map((d,i)=><span key={d.name}><strong>{d.name}</strong>{d.count>1?" · "+d.count+" menciones":" · Recomendado por la comunidad"}{i<Math.min(uniqueDishes.length,3)-1?" · ":""}</span>)}</p></>}{latestComment&&<><h3>EXPERIENCIA DE LA COMUNIDAD</h3><p>“{latestComment}”</p></>}<p className="lead">{community.length} evaluaciones{uniqueDishes.length?" · "+uniqueDishes.length+" plato"+(uniqueDishes.length===1?"":"s")+" válido"+(uniqueDishes.length===1?"":"s")+" mencionado"+(uniqueDishes.length===1?"":"s"):""}</p></section>
  <section className="detail-section"><p><strong>Precio:</strong> {rangoPrecio(r)} por persona</p><p>{r.direccion||"Dirección pendiente"}</p>{r.telefono&&<p>{r.telefono}</p>}{r.web&&<p><a href={r.web} target="_blank" rel="noreferrer">Visitar sitio web →</a></p>}</section>
+ <section className="detail-section navigation-section"><h2>LLEVAME</h2><p>Elige cómo quieres llegar.</p><div className="nav-actions">
+   {r.lat!=null&&r.lng!=null ? <>
+     <a className="nav-button" href={`https://www.google.com/maps/dir/?api=1&destination=${r.lat},${r.lng}`} target="_blank" rel="noreferrer">GOOGLE MAPS →</a>
+     <a className="nav-button" href={`https://www.waze.com/ul?ll=${r.lat}%2C${r.lng}&navigate=yes`} target="_blank" rel="noreferrer">WAZE →</a>
+     <a className="nav-button" href={`https://m.uber.com/ul/?action=setPickup&dropoff[latitude]=${r.lat}&dropoff[longitude]=${r.lng}`} target="_blank" rel="noreferrer">UBER →</a>
+   </> : <a className="nav-button" href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(r.direccion||r.nombre)}`} target="_blank" rel="noreferrer">BUSCAR EN GOOGLE MAPS →</a>}
+ </div></section>
  <button className="secondary" type="button" onClick={onToggleFavorite}>{favorite?"♥ GUARDADO EN FAVORITOS":"♡ GUARDAR EN FAVORITOS"}</button><button className="primary" type="button" onClick={()=>setShowEval(true)}>EVALUAR ESTE LUGAR</button></main></div>
 }
 
