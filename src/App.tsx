@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "./integrations/supabase/client";
 import {
   AMBIENTES, ANTOJOS, COCINAS, CON_QUIEN, PERSONAS, PRESUPUESTOS,
-  anonId, calcularMatch, contextoVacio, guardarContexto, leerContexto, rangoPrecio,
+  anonId, alternarFavorito, calcularMatch, contextoVacio, guardarContexto, leerContexto, leerFavoritos, rangoPrecio,
   type Contexto, type Restaurante,
 } from "./lib/guiame";
 
@@ -32,6 +32,7 @@ export default function App() {
   const [ciudades,setCiudades]=useState<Ciudad[]>([]);
   const [zonas,setZonas]=useState<Zona[]>([]);
   const [results,setResults]=useState<Restaurante[]>([]);
+  const [favorites,setFavorites]=useState<string[]>(()=>leerFavoritos());
   const [loading,setLoading]=useState(true);
   const [searching,setSearching]=useState(false);
   const [error,setError]=useState<string|null>(null);
@@ -72,11 +73,12 @@ export default function App() {
   }
 
   if(screen==="inscribe") return <Inscription paises={paises} ciudades={ciudades} zonas={zonas} onBack={()=>setScreen("home")}/>;
+  if(screen==="favorites") return <Favorites ids={favorites} ctx={ctx} onBack={()=>setScreen("home")} onSelect={(r)=>{setSelected(r);setScreen("detail")}}/>;
   if(screen==="results") return <Results results={results} ctx={ctx} onBack={()=>setScreen("home")} onSelect={(r)=>{setSelected(r);setScreen("detail")}}/>;
-  if(screen==="detail" && selected) return <Detail r={selected} ctx={ctx} onBack={()=>setScreen("results")}/>;
+  if(screen==="detail" && selected) return <Detail r={selected} ctx={ctx} favorite={favorites.includes(selected.id)} onToggleFavorite={async()=>setFavorites(await alternarFavorito(selected.id))} onBack={()=>setScreen("results")}/>;
 
   return <div className="app">
-    <header className="top"><div className="brand">GUÍA<span>·</span>ME</div><div className="tag">COME MEJOR. DECIDE MEJOR.</div></header>
+    <header className="top"><div className="brand">GUÍA<span>·</span>ME</div><div className="tag">COME MEJOR. DECIDE MEJOR.</div><button className="secondary" onClick={()=>setScreen("favorites")}>♡ FAVORITOS ({favorites.length})</button></header>
     <main className="hero">
       <section className="intro">
         <p className="eyebrow">TU GUÍA GASTRONÓMICA PERSONAL</p>
@@ -119,7 +121,7 @@ function Results({results,ctx,onBack,onSelect}:{results:Restaurante[];ctx:Contex
  {results.length===0?<div className="empty"><h2>Aún no tenemos restaurantes aquí.</h2><p>La comunidad puede ayudarnos a construir esta zona.</p></div>:<div className="cards">{results.slice(0,3).map((r,i)=>{const m=calcularMatch(r,ctx);return <article className="restaurant" key={r.id} role="button" tabIndex={0} onClick={()=>onSelect(r)} onKeyDown={e=>{if(e.key==="Enter"||e.key===" ")onSelect(r)}}><div className="rank">0{i+1}</div><div className="rbody"><div className="match">{m.match}% MATCH</div><h2>{r.nombre}</h2><p className="meta">{r.cocina.join(" · ")||"Gastronomía"} · {rangoPrecio(r)}</p><div className="scores"><span>COCINA <b>{r.food_avg??"—"}/30</b></span><span>DECOR <b>{r.decor_avg??"—"}/30</b></span><span>SERVICIO <b>{r.service_avg??"—"}/30</b></span><span>PRECIO <b>{r.cost_avg??"—"}/30</b></span></div><p className="why">{m.razones.slice(0,3).map(x=>x.etiqueta+": "+x.detalle).join(" · ")}</p></div></article>})}</div>}
  </main></div>
 }
-function Detail({r,ctx,onBack}:{r:Restaurante;ctx:Contexto;onBack:()=>void}){
+function Detail({r,ctx,favorite,onToggleFavorite,onBack}:{r:Restaurante;ctx:Contexto;favorite:boolean;onToggleFavorite:()=>Promise<void>;onBack:()=>void}){
  const [showEval,setShowEval]=useState(false),[community,setCommunity]=useState<any[]>([]);
  useEffect(()=>{let live=true;(async()=>{const {data}=await supabase.from("evaluaciones").select("plato,comentario,created_at").eq("restaurante_id",r.id).order("created_at",{ascending:false}).limit(50);if(live)setCommunity(data??[])})();return()=>{live=false}},[r.id]);
  if(showEval) return <Evaluation r={r} ctx={ctx} onBack={()=>setShowEval(false)}/>;
@@ -137,9 +139,15 @@ function Detail({r,ctx,onBack}:{r:Restaurante;ctx:Contexto;onBack:()=>void}){
  <section className="detail-section"><h2>VALORACIÓN GUÍA·ME</h2><div className="scores"><span>COCINA <b>{r.food_avg??"—"}/30</b></span><span>DECORACIÓN <b>{r.decor_avg??"—"}/30</b></span><span>SERVICIO <b>{r.service_avg??"—"}/30</b></span><span>PRECIO <b>{r.cost_avg??"—"}/30</b></span></div><p className="why">{m.razones.slice(0,3).map(x=>x.etiqueta+": "+x.detalle).join(" · ")}</p></section>
  <section className="detail-section"><h2>LA RECOMENDACIÓN</h2><p>{recommendation}</p>{uniqueDishes.length>0&&<><h3>LO QUE PEDIR</h3><p>{uniqueDishes.slice(0,3).map((d,i)=><span key={d.name}><strong>{d.name}</strong>{d.count>1?" · "+d.count+" menciones":" · Recomendado por la comunidad"}{i<Math.min(uniqueDishes.length,3)-1?" · ":""}</span>)}</p></>}{latestComment&&<><h3>EXPERIENCIA DE LA COMUNIDAD</h3><p>“{latestComment}”</p></>}<p className="lead">{community.length} evaluaciones{uniqueDishes.length?" · "+uniqueDishes.length+" plato"+(uniqueDishes.length===1?"":"s")+" válido"+(uniqueDishes.length===1?"":"s")+" mencionado"+(uniqueDishes.length===1?"":"s"):""}</p></section>
  <section className="detail-section"><p><strong>Precio:</strong> {rangoPrecio(r)} por persona</p><p>{r.direccion||"Dirección pendiente"}</p>{r.telefono&&<p>{r.telefono}</p>}{r.web&&<p><a href={r.web} target="_blank" rel="noreferrer">Visitar sitio web →</a></p>}</section>
- <button className="primary" type="button" onClick={()=>setShowEval(true)}>EVALUAR ESTE LUGAR</button></main></div>
+ <button className="secondary" type="button" onClick={onToggleFavorite}>{favorite?"♥ GUARDADO EN FAVORITOS":"♡ GUARDAR EN FAVORITOS"}</button><button className="primary" type="button" onClick={()=>setShowEval(true)}>EVALUAR ESTE LUGAR</button></main></div>
 }
 
+
+function Favorites({ids,ctx,onBack,onSelect}:{ids:string[];ctx:Contexto;onBack:()=>void;onSelect:(r:Restaurante)=>void}){
+ const [items,setItems]=useState<Restaurante[]>([]); const [loading,setLoading]=useState(true); const [error,setError]=useState<string|null>(null);
+ useEffect(()=>{let live=true;(async()=>{if(!ids.length){setItems([]);setLoading(false);return;} const {data,error:e}=await supabase.from("restaurantes").select("*").in("id",ids); if(!live)return; if(e)setError(e.message); setItems((data??[]).map(clean)); setLoading(false)})();return()=>{live=false}},[ids]);
+ return <div className="app"><header className="top"><button className="back" onClick={onBack}>← Volver</button><div className="brand">GUÍA<span>·</span>ME</div></header><main className="results"><p className="eyebrow">MIS LUGARES</p><h1>Mis<br/><em>favoritos.</em></h1><p className="lead">Guardados en este dispositivo.</p>{error&&<div className="error">{error}</div>}{loading?<div className="loading">Cargando favoritos…</div>:!items.length?<div className="empty"><h2>Aún no tienes favoritos.</h2><p>Guarda un restaurante desde su ficha y aparecerá aquí.</p></div>:<div className="cards">{items.map(r=><article className="restaurant" key={r.id} role="button" tabIndex={0} onClick={()=>onSelect(r)}><div className="rank">♡</div><div className="rbody"><div className="match">{calcularMatch(r,ctx).match}% MATCH</div><h2>{r.nombre}</h2><p className="meta">{r.cocina.join(" · ")||"Gastronomía"} · {rangoPrecio(r)}</p><div className="scores"><span>COCINA <b>{r.food_avg??"—"}/30</b></span><span>DECOR <b>{r.decor_avg??"—"}/30</b></span><span>SERVICIO <b>{r.service_avg??"—"}/30</b></span><span>PRECIO <b>{r.cost_avg??"—"}/30</b></span></div></div></article>)}</div>}</main></div>
+}
 
 function Score({label,value,setValue}:{label:string;value:number;setValue:(v:number)=>void}){return <div className="score-control"><div><strong>{label}</strong><b>{value}/30</b></div><input type="range" min="0" max="30" value={value} onChange={e=>setValue(Number(e.target.value))}/></div>}
 function Evaluation({r,ctx,onBack}:{r:Restaurante;ctx:Contexto;onBack:()=>void}){const [food,setFood]=useState(15),[decor,setDecor]=useState(15),[service,setService]=useState(15),[cost,setCost]=useState(15),[plato,setPlato]=useState(""),[precio,setPrecio]=useState(""),[comentario,setComentario]=useState(""),[saving,setSaving]=useState(false),[done,setDone]=useState(false),[error,setError]=useState<string|null>(null);
