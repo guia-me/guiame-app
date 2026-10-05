@@ -10,12 +10,12 @@ type Pais = { id:string; nombre:string; codigo_iso2:string|null };
 type Ciudad = { id:string; nombre:string; pais_id:string; imagen_portada_url?:string|null };
 type Zona = { id:string; nombre:string; ciudad_id:string };
 
-const CITY_IMAGE_FALLBACK = "https://images.unsplash.com/photo-1587759301533-ae42d7065a80?auto=format&fit=crop&w=1600&q=82";
 const RESTAURANT_REFERENCE_IMAGES = [
   "https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?auto=format&fit=crop&w=900&q=78",
   "https://images.unsplash.com/photo-1566889110088-1119b49ce526?auto=format&fit=crop&w=900&q=78",
 ];
-const cityImage = (city?:Ciudad) => city?.imagen_portada_url || CITY_IMAGE_FALLBACK;
+
+const COUNTRY_IMAGES:Record<string,string>={"Panamá":"https://images.unsplash.com/photo-1512790901417-3c1b2f1d2d1b?auto=format&fit=crop&w=900&q=82","Panama":"https://images.unsplash.com/photo-1512790901417-3c1b2f1d2d1b?auto=format&fit=crop&w=900&q=82","México":"https://images.unsplash.com/photo-1518105779142-d975f22f1b0a?auto=format&fit=crop&w=900&q=82","Mexico":"https://images.unsplash.com/photo-1518105779142-d975f22f1b0a?auto=format&fit=crop&w=900&q=82","Chile":"https://images.unsplash.com/photo-1505654207345-2b4a4a2a0f8b?auto=format&fit=crop&w=900&q=82"}; const countryImage=(name:string)=>COUNTRY_IMAGES[name]||"https://images.unsplash.com/photo-1523731407965-2430cd12f5e4?auto=format&fit=crop&w=900&q=82";
 
 const clean = (v:any): Restaurante => ({
   id:v.id, nombre:v.nombre, pais_id:v.pais_id, ciudad_id:v.ciudad_id, zona_id:v.zona_id,
@@ -109,12 +109,12 @@ export default function App() {
         {error&&<div className="error">{error}</div>}
         {loading?<div className="loading">Cargando lugares…</div>:<>
           <label>País</label>
-          <div className="chips country-chips">{paises.map(p=><button key={p.id} className={ctx.paisId===p.id?"chip active":"chip"} onClick={()=>set({paisId:p.id,paisNombre:p.nombre,ciudadId:null,ciudadNombre:undefined,zonaId:null,zonaNombre:undefined,usarUbicacion:false,lat:null,lng:null})}>{p.nombre}</button>)}</div>
+          <div className="country-cards">{paises.map(p=><button key={p.id} className={ctx.paisId===p.id?"country-card active":"country-card"} onClick={()=>set({paisId:p.id,paisNombre:p.nombre,ciudadId:null,ciudadNombre:undefined,zonaId:null,zonaNombre:undefined,usarUbicacion:false,lat:null,lng:null})}><img src={countryImage(p.nombre)} alt="" loading="lazy"/><span>{p.nombre}</span></button>)}</div>
           {ctx.paisId&&<><label>Ciudad</label><select value={ctx.ciudadId??""} onChange={e=>{const x=cities.find(v=>v.id===e.target.value);set({ciudadId:e.target.value||null,ciudadNombre:x?.nombre,zonaId:null,zonaNombre:undefined,usarUbicacion:false,lat:null,lng:null})}}><option value="">Selecciona una ciudad</option>{cities.map(x=><option key={x.id} value={x.id}>{x.nombre}</option>)}</select></>}
-          {ctx.ciudadId&&<CityHero city={cities.find(x=>x.id===ctx.ciudadId)}/>}
           {ctx.ciudadId&&<><label>Zona</label><select value={ctx.zonaId??""} onChange={e=>{const x=zones.find(v=>v.id===e.target.value);set({zonaId:e.target.value||null,zonaNombre:x?.nombre,usarUbicacion:false,lat:null,lng:null})}}><option value="">Selecciona una zona</option>{zones.map(x=><option key={x.id} value={x.id}>{x.nombre}</option>)}</select></>}
           {ctx.zonaId&&<Filters ctx={ctx} set={set}/>}
-          <div className="location-box">
+          {ctx.usarUbicacion&&<Filters ctx={ctx} set={set}/>}
+          <div className="bottom-actions"><div className="location-box">
             <button className={ctx.usarUbicacion?"secondary active-location":"secondary"} type="button" onClick={()=>{
               if(!navigator.geolocation){setError("Tu navegador no permite geolocalización.");return;}
               setError(null);
@@ -126,8 +126,7 @@ export default function App() {
             }}>📍 {ctx.usarUbicacion?"UBICACIÓN ACTIVADA":"USAR MI UBICACIÓN"}</button>
             {ctx.usarUbicacion&&<p className="location-note">Buscaremos restaurantes cercanos y los ordenaremos por MATCH + distancia.</p>}
           </div>
-          {ctx.usarUbicacion&&<Filters ctx={ctx} set={set}/>}
-          <button className="primary" disabled={(!ctx.zonaId && !(ctx.usarUbicacion&&ctx.lat!=null&&ctx.lng!=null))||searching} onClick={buscar}>{searching?"CALCULANDO MATCH…":"ENCONTRAR MI MATCH →"}</button>
+          <button className="primary" disabled={(!ctx.zonaId && !(ctx.usarUbicacion&&ctx.lat!=null&&ctx.lng!=null))||searching} onClick={buscar}>{searching?"CALCULANDO MATCH…":"ENCONTRAR MI MATCH →"}</button></div>
           <button className="secondary" onClick={()=>setScreen("inscribe")}>＋ INSCRIBIR RESTAURANTE</button>
         </>}
       </section>
@@ -146,13 +145,6 @@ function Filters({ctx,set}:{ctx:Contexto;set:(x:Partial<Contexto>)=>void}){
  </div>
 }
 
-function CityHero({city}:{city?:Ciudad}) {
- if(!city)return null;
- return <div className="city-hero">
-   <img src={cityImage(city)} alt={city.nombre} loading="lazy"/>
-   <div className="city-hero-overlay"><span>ESTÁS EN</span><strong>{city.nombre}</strong><small>Una ciudad. Miles de posibilidades.</small></div>
- </div>;
-}
 function ReferenceRestaurantImage({index}:{index:number}) {
  return <div className="card-image-wrap">
    <img className="card-image" src={RESTAURANT_REFERENCE_IMAGES[index % RESTAURANT_REFERENCE_IMAGES.length]} alt="" loading="lazy"/>
