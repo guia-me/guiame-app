@@ -52,6 +52,11 @@ export const ANTOJOS = [
 export const COCINAS = [
   "Panameña",
   "Criolla",
+  "Mexicana",
+  "Peruana",
+  "Venezolana",
+  "Española",
+  "Árabe",
   "Mariscos",
   "Italiana",
   "Japonesa",
@@ -65,6 +70,12 @@ export const COCINAS = [
   "Saludable",
   "Café",
   "Desayunos",
+  "China",
+  "Tailandesa",
+  "India",
+  "Francesa",
+  "Mediterránea",
+  "Vegana",
 ] as const;
 export const PRESUPUESTOS = [
   { label: "$10–20", min: 10, max: 20 },
@@ -283,10 +294,10 @@ export function calcularMatch(r: Restaurante, c: Contexto): ResultadoMatch {
     };
     const coincidencias = r.cocina.filter((x) => c.cocinas.some((buscada) => coincide(x, buscada)));
     pCocina = coincidencias.length > 0 ? PESOS_MATCH.cocina : 0;
-    if (coincidencias.length > 0) {
+    if (c.cocinas.length > 0) {
       razones.push({
         etiqueta: "Cocina",
-        detalle: `Buscas ${coincidencias.join(", ")}`,
+        detalle: coincidencias.length > 0 ? `Buscas ${coincidencias.join(", ")}` : `No coincide con ${c.cocinas.join(" / ")}`,
         puntos: pCocina,
         de: PESOS_MATCH.cocina,
       });
