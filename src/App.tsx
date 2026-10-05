@@ -7,8 +7,15 @@ import {
 } from "./lib/guiame";
 
 type Pais = { id:string; nombre:string; codigo_iso2:string|null };
-type Ciudad = { id:string; nombre:string; pais_id:string };
+type Ciudad = { id:string; nombre:string; pais_id:string; imagen_portada_url?:string|null };
 type Zona = { id:string; nombre:string; ciudad_id:string };
+
+const CITY_IMAGE_FALLBACK = "https://images.unsplash.com/photo-1587759301533-ae42d7065a80?auto=format&fit=crop&w=1600&q=82";
+const RESTAURANT_REFERENCE_IMAGES = [
+  "https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?auto=format&fit=crop&w=900&q=78",
+  "https://images.unsplash.com/photo-1566889110088-1119b49ce526?auto=format&fit=crop&w=900&q=78",
+];
+const cityImage = (city?:Ciudad) => city?.imagen_portada_url || CITY_IMAGE_FALLBACK;
 
 const clean = (v:any): Restaurante => ({
   id:v.id, nombre:v.nombre, pais_id:v.pais_id, ciudad_id:v.ciudad_id, zona_id:v.zona_id,
@@ -42,7 +49,7 @@ export default function App() {
     (async()=>{
       const [p,c,z]=await Promise.all([
         supabase.from("paises").select("id,nombre,codigo_iso2").order("nombre"),
-        supabase.from("ciudades").select("id,nombre,pais_id").order("nombre"),
+        supabase.from("ciudades").select("id,nombre,pais_id,imagen_portada_url").order("nombre"),
         supabase.from("zonas").select("id,nombre,ciudad_id").order("nombre"),
       ]);
       if(!alive)return;
@@ -102,8 +109,9 @@ export default function App() {
         {error&&<div className="error">{error}</div>}
         {loading?<div className="loading">Cargando lugares…</div>:<>
           <label>País</label>
-          <div className="chips">{paises.map(p=><button key={p.id} className={ctx.paisId===p.id?"chip active":"chip"} onClick={()=>set({paisId:p.id,paisNombre:p.nombre,ciudadId:null,ciudadNombre:undefined,zonaId:null,zonaNombre:undefined,usarUbicacion:false,lat:null,lng:null})}>{p.nombre}</button>)}</div>
+          <div className="chips country-chips">{paises.map(p=><button key={p.id} className={ctx.paisId===p.id?"chip active":"chip"} onClick={()=>set({paisId:p.id,paisNombre:p.nombre,ciudadId:null,ciudadNombre:undefined,zonaId:null,zonaNombre:undefined,usarUbicacion:false,lat:null,lng:null})}>{p.nombre}</button>)}</div>
           {ctx.paisId&&<><label>Ciudad</label><select value={ctx.ciudadId??""} onChange={e=>{const x=cities.find(v=>v.id===e.target.value);set({ciudadId:e.target.value||null,ciudadNombre:x?.nombre,zonaId:null,zonaNombre:undefined,usarUbicacion:false,lat:null,lng:null})}}><option value="">Selecciona una ciudad</option>{cities.map(x=><option key={x.id} value={x.id}>{x.nombre}</option>)}</select></>}
+          {ctx.ciudadId&&<CityHero city={cities.find(x=>x.id===ctx.ciudadId)}/>}
           {ctx.ciudadId&&<><label>Zona</label><select value={ctx.zonaId??""} onChange={e=>{const x=zones.find(v=>v.id===e.target.value);set({zonaId:e.target.value||null,zonaNombre:x?.nombre,usarUbicacion:false,lat:null,lng:null})}}><option value="">Selecciona una zona</option>{zones.map(x=><option key={x.id} value={x.id}>{x.nombre}</option>)}</select></>}
           {ctx.zonaId&&<Filters ctx={ctx} set={set}/>}
           <div className="location-box">
@@ -138,10 +146,27 @@ function Filters({ctx,set}:{ctx:Contexto;set:(x:Partial<Contexto>)=>void}){
  </div>
 }
 
+function CityHero({city}:{city?:Ciudad}) {
+ if(!city)return null;
+ return <div className="city-hero">
+   <img src={cityImage(city)} alt={city.nombre} loading="lazy"/>
+   <div className="city-hero-overlay"><span>ESTÁS EN</span><strong>{city.nombre}</strong><small>Una ciudad. Miles de posibilidades.</small></div>
+ </div>;
+}
+function ReferenceRestaurantImage({index}:{index:number}) {
+ return <div className="card-image-wrap">
+   <img className="card-image" src={RESTAURANT_REFERENCE_IMAGES[index % RESTAURANT_REFERENCE_IMAGES.length]} alt="" loading="lazy"/>
+   <span className="reference-badge">IMAGEN DE REFERENCIA</span>
+ </div>;
+}
+function DetailRestaurantImage({r}:{r:Restaurante}) {
+ if(r.imagen_url) return <img src={r.imagen_url} alt={r.nombre} className="detail-image"/>;
+ return <div className="detail-image-wrap"><img src={RESTAURANT_REFERENCE_IMAGES[0]} alt="" className="detail-image"/><span className="reference-badge">IMAGEN DE REFERENCIA · FOTO REAL PENDIENTE</span></div>;
+}
 function Results({results,ctx,onBack,onSelect}:{results:Restaurante[];ctx:Contexto;onBack:()=>void;onSelect:(r:Restaurante)=>void}){
  return <div className="app"><header className="top"><button className="back" onClick={onBack}>← Cambiar búsqueda</button><div className="brand">GUÍA<span>·</span>ME</div></header>
  <main className="results"><p className="eyebrow">TU SELECCIÓN</p><h1>Estos son tus<br/><em>mejores matches.</em></h1><p className="lead">{ctx.zonaNombre ?? "Cerca de ti"}{ctx.ciudadNombre ? ` · ${ctx.ciudadNombre}` : ""} · {results.length} restaurantes encontrados</p>
- {results.length===0?<div className="empty"><h2>Aún no tenemos restaurantes aquí.</h2><p>La comunidad puede ayudarnos a construir esta zona.</p></div>:<div className="cards">{results.slice(0,3).map((r,i)=>{const m=calcularMatch(r,ctx);return <article className="restaurant" key={r.id} role="button" tabIndex={0} onClick={()=>onSelect(r)} onKeyDown={e=>{if(e.key==="Enter"||e.key===" ")onSelect(r)}}><div className="rank">0{i+1}</div>{r.imagen_url?<img className="card-image" src={r.imagen_url} alt="" loading="lazy"/>:<div className="card-image card-image-fallback">GUÍA·ME</div>}<div className="rbody"><div className="match">{m.match}% MATCH{r.num_evaluaciones === 0 ? " · PROVISIONAL" : ""}</div><h2>{r.nombre}</h2><p className="meta">{r.cocina.join(" · ")||"Gastronomía"} · {rangoPrecio(r)}</p><div className="scores"><span>COCINA <b>{r.food_avg??"—"}/30</b></span><span>DECOR <b>{r.decor_avg??"—"}/30</b></span><span>SERVICIO <b>{r.service_avg??"—"}/30</b></span><span>PRECIO <b>{r.cost_avg??"—"}/30</b></span></div><p className="why">{m.razones.slice(0,3).map(x=>x.etiqueta+": "+x.detalle).join(" · ")}</p></div></article>})}</div>}
+ {results.length===0?<div className="empty"><h2>Aún no tenemos restaurantes aquí.</h2><p>La comunidad puede ayudarnos a construir esta zona.</p></div>:<div className="cards">{results.slice(0,3).map((r,i)=>{const m=calcularMatch(r,ctx);return <article className="restaurant" key={r.id} role="button" tabIndex={0} onClick={()=>onSelect(r)} onKeyDown={e=>{if(e.key==="Enter"||e.key===" ")onSelect(r)}}><div className="rank">0{i+1}</div>{r.imagen_url?<img className="card-image" src={r.imagen_url} alt={r.nombre} loading="lazy"/>:<ReferenceRestaurantImage index={i}/>}<div className="rbody"><div className="match">{m.match}% MATCH{r.num_evaluaciones === 0 ? " · PROVISIONAL" : ""}</div><h2>{r.nombre}</h2><p className="meta">{r.cocina.join(" · ")||"Gastronomía"} · {rangoPrecio(r)}</p><div className="scores"><span>COCINA <b>{r.food_avg??"—"}/30</b></span><span>DECOR <b>{r.decor_avg??"—"}/30</b></span><span>SERVICIO <b>{r.service_avg??"—"}/30</b></span><span>PRECIO <b>{r.cost_avg??"—"}/30</b></span></div><p className="why">{m.razones.slice(0,3).map(x=>x.etiqueta+": "+x.detalle).join(" · ")}</p></div></article>})}</div>}
  </main></div>
 }
 function Detail({r,ctx,favorite,onToggleFavorite,onBack}:{r:Restaurante;ctx:Contexto;favorite:boolean;onToggleFavorite:()=>Promise<void>;onBack:()=>void}){
@@ -158,7 +183,7 @@ function Detail({r,ctx,favorite,onToggleFavorite,onBack}:{r:Restaurante;ctx:Cont
  const recommendation=r.descripcion?.trim()||(uniqueDishes.length?"La comunidad destaca especialmente "+uniqueDishes[0].name.toLowerCase()+".":"Una recomendación construida con la experiencia de la comunidad GUÍA·ME."); return <div className="app"><header className="top"><button className="back" onClick={onBack}>← Volver a resultados</button><div className="brand">GUÍA<span>·</span>ME</div></header>
  <main className="results"><p className="eyebrow">FICHA DEL RESTAURANTE</p><h1>{r.nombre}</h1><div className="match">{m.match}% MATCH{r.num_evaluaciones === 0 ? " · PROVISIONAL" : ""}</div>
  <p className="lead">{r.cocina.join(" · ")||"Gastronomía"} · {rangoPrecio(r)} · {ctx.zonaNombre}</p>
- {r.imagen_url&&<img src={r.imagen_url} alt={r.nombre} className="detail-image"/>}
+ <DetailRestaurantImage r={r}/>
  <section className="detail-section"><h2>VALORACIÓN GUÍA·ME</h2><div className="scores"><span>COCINA <b>{r.food_avg??"—"}/30</b></span><span>DECORACIÓN <b>{r.decor_avg??"—"}/30</b></span><span>SERVICIO <b>{r.service_avg??"—"}/30</b></span><span>PRECIO <b>{r.cost_avg??"—"}/30</b></span></div><p className="why">{m.razones.slice(0,3).map(x=>x.etiqueta+": "+x.detalle).join(" · ")}</p></section>
  <section className="detail-section"><h2>LA RECOMENDACIÓN</h2><p>{recommendation}</p>{uniqueDishes.length>0&&<><h3>LO QUE PEDIR</h3><p>{uniqueDishes.slice(0,3).map((d,i)=><span key={d.name}><strong>{d.name}</strong>{d.count>1?" · "+d.count+" menciones":" · Recomendado por la comunidad"}{i<Math.min(uniqueDishes.length,3)-1?" · ":""}</span>)}</p></>}{latestComment&&<><h3>EXPERIENCIA DE LA COMUNIDAD</h3><p>“{latestComment}”</p></>}<p className="lead">{community.length} evaluaciones{uniqueDishes.length?" · "+uniqueDishes.length+" plato"+(uniqueDishes.length===1?"":"s")+" válido"+(uniqueDishes.length===1?"":"s")+" mencionado"+(uniqueDishes.length===1?"":"s"):""}</p></section>
  <section className="detail-section"><p><strong>Precio:</strong> {rangoPrecio(r)} por persona</p><p>{r.direccion||"Dirección pendiente"}</p>{r.telefono&&<p>{r.telefono}</p>}{r.web&&<p><a href={r.web} target="_blank" rel="noreferrer">Visitar sitio web →</a></p>}</section>
