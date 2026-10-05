@@ -159,3 +159,56 @@ footer{background:rgba(255,253,248,.28)}
   .scores{gap:6px}
   .scores b{font-size:11px}
 }
+
+
+/* City imagery + realistic restaurant photo treatment */
+.city-hero{
+  position:relative;
+  height:230px;
+  margin:26px 0 8px;
+  overflow:hidden;
+  border:1px solid var(--line);
+  background:#dcd5c8;
+  box-shadow:0 18px 45px rgba(66,53,30,.10);
+}
+.city-hero img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+  filter:saturate(.88) contrast(.98);
+}
+.city-hero:after{
+  content:"";
+  position:absolute;inset:0;
+  background:linear-gradient(90deg,rgba(15,16,12,.68),rgba(15,16,12,.08) 70%,rgba(15,16,12,.22));
+}
+.city-hero-overlay{
+  position:absolute;z-index:1;left:25px;bottom:23px;color:#fff;
+  display:flex;flex-direction:column;align-items:flex-start;
+  text-shadow:0 2px 12px rgba(0,0,0,.25);
+}
+.city-hero-overlay span{font-size:9px;letter-spacing:.22em;font-weight:700;opacity:.85}
+.city-hero-overlay strong{
+  font-family:"Playfair Display",serif;font-size:40px;font-weight:500;line-height:1.05;
+}
+.city-hero-overlay small{font-size:12px;margin-top:6px;opacity:.88}
+.card-image-wrap,.detail-image-wrap{position:relative;overflow:hidden}
+.card-image-wrap{width:210px;min-width:210px;height:210px}
+.card-image-wrap .card-image{width:100%;min-width:0;height:100%}
+.reference-badge{
+  position:absolute;left:8px;bottom:8px;
+  padding:5px 7px;
+  background:rgba(23,24,18,.78);color:#fff;
+  font-size:7px;letter-spacing:.11em;font-weight:700;
+}
+.detail-image-wrap .detail-image{margin:0}
+.detail-image-wrap{margin:4px 0 24px;box-shadow:0 18px 55px rgba(66,53,30,.12)}
+.detail-image-wrap .reference-badge{bottom:12px;left:12px}
+@media(max-width:700px){
+  .city-hero{height:185px;margin-top:22px}
+  .city-hero-overlay{left:17px;bottom:17px}
+  .city-hero-overlay strong{font-size:31px}
+  .card-image-wrap{width:108px;min-width:108px;height:108px}
+  .reference-badge{font-size:6px;padding:4px 5px}
+}
