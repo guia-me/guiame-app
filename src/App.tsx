@@ -186,7 +186,7 @@ if(done)return <div className="app"><main className="results"><p className="eyeb
 return <div className="app"><header className="top"><button className="back" onClick={onBack}>← Cancelar</button><div className="brand">GUÍA<span>·</span>ME</div></header><main className="results"><p className="eyebrow">EVALÚA TU EXPERIENCIA</p><h1>{r.nombre}</h1><p className="lead">Valora cada dimensión de 0 a 30. Tu experiencia es parte del motor de GUÍA·ME.</p><Score label="Cocina" value={food} setValue={setFood}/><Score label="Decoración" value={decor} setValue={setDecor}/><Score label="Servicio" value={service} setValue={setService}/><Score label="Precio" value={cost} setValue={setCost}/><div className="detail-section"><label>¿Cuánto pagaste? ({currency(ctx.paisNombre)})</label><input value={precio} onChange={e=>setPrecio(e.target.value)} inputMode="decimal" placeholder="Ej. 28.50"/><label>Plato que probaste</label><input value={plato} onChange={e=>setPlato(e.target.value)} placeholder="Ej. Ceviche de corvina"/><label>Comentario</label><textarea value={comentario} onChange={e=>setComentario(e.target.value)} rows={4} placeholder="Tu experiencia…"/></div>{error&&<div className="error">{error}</div>}<button className="primary" disabled={saving} onClick={save}>{saving?"GUARDANDO…":"PUBLICAR MI EVALUACIÓN"}</button></main></div>}
 function currency(p?:string){const x=(p??"").toLowerCase();if(x.includes("chile"))return"CLP";if(x.includes("méxico")||x.includes("mexico"))return"MXN";if(x.includes("panamá")||x.includes("panama"))return"USD";return"moneda local"}
 function Inscription({paises,ciudades,zonas,onBack}:{paises:Pais[];ciudades:Ciudad[];zonas:Zona[];onBack:()=>void}) {
- const [name,setName]=useState(""),[pais,setPais]=useState(""),[ciudad,setCiudad]=useState(""),[zona,setZona]=useState(""),[direccion,setDireccion]=useState(""),[cocina,setCocina]=useState(""),[antojo,setAntojo]=useState(""),[precio,setPrecio]=useState(""),[saving,setSaving]=useState(false),[done,setDone]=useState(false),[error,setError]=useState<string|null>(null);
+ const [name,setName]=useState(""),[pais,setPais]=useState(""),[ciudad,setCiudad]=useState(""),[zona,setZona]=useState(""),[direccion,setDireccion]=useState(""),[cocina,setCocina]=useState(""),[antojo,setAntojo]=useState(""),[precio,setPrecio]=useState(""),[photo,setPhoto]=useState<File|null>(null),[photoPreview,setPhotoPreview]=useState(""),[saving,setSaving]=useState(false),[done,setDone]=useState(false),[error,setError]=useState<string|null>(null);
  const norm=(v:string)=>v.trim().toLowerCase();
  const matchedPais=paises.find(x=>norm(x.nombre)===norm(pais));
  const cityOptions=matchedPais?ciudades.filter(x=>x.pais_id===matchedPais.id):ciudades;
@@ -198,19 +198,24 @@ function Inscription({paises,ciudades,zonas,onBack}:{paises:Pais[];ciudades:Ciud
    if(saving)return;
    if(!name.trim()||!pais.trim()||!ciudad.trim()||!zona.trim()||!direccion.trim()){setError("Completa nombre, país, ciudad, zona y dirección.");return;}
    setSaving(true);setError(null);
-   const {error:e}=await supabase.rpc("registrar_aporte_restaurante",{
-     p_nombre:name.trim(),
-     p_pais:pais.trim(),
-     p_ciudad:ciudad.trim(),
-     p_zona:zona.trim(),
-     p_direccion:direccion.trim(),
-     p_tipo_cocina:cocina.trim()||null,
-     p_rango_precio:precio.trim()||null,
-     p_anon_id:anonId(),
-     p_especialidades:antojo.trim()?antojo.split(",").map(x=>x.trim()).filter(Boolean):[]
-   });
-   if(e)setError(e.message);else setDone(true);
-   setSaving(false);
+   try{
+     let imageUrl:string|null=null;
+     if(photo){
+       const ext=(photo.name.split(".").pop()||"jpg").toLowerCase().replace(/[^a-z0-9]/g,"")||"jpg";
+       const path=`community/${anonId()}/${crypto.randomUUID()}.${ext}`;
+       const upload=await supabase.storage.from("restaurantes").upload(path,photo,{contentType:photo.type||"image/jpeg",upsert:false});
+       if(upload.error)throw upload.error;
+       imageUrl=supabase.storage.from("restaurantes").getPublicUrl(path).data.publicUrl;
+     }
+     const {error:e}=await supabase.rpc("registrar_aporte_restaurante",{
+       p_nombre:name.trim(),p_pais:pais.trim(),p_ciudad:ciudad.trim(),p_zona:zona.trim(),p_direccion:direccion.trim(),
+       p_tipo_cocina:cocina.trim()||null,p_rango_precio:precio.trim()||null,p_anon_id:anonId(),
+       p_especialidades:antojo.trim()?antojo.split(",").map(x=>x.trim()).filter(Boolean):[],p_imagen_url:imageUrl
+     });
+     if(e)throw e;
+     setDone(true);
+   }catch(e){setError(e instanceof Error?e.message:"No se pudo inscribir el restaurante.");}
+   finally{setSaving(false)}
  }
  if(done)return <div className="app"><main className="results"><p className="eyebrow">GRACIAS</p><h1>Restaurante<br/><em>inscrito.</em></h1><p className="lead">Quedó pendiente de verificación. Si la zona no existía, también quedó propuesta para incorporarla a GUÍA·ME.</p><button className="primary" onClick={onBack}>VOLVER A INICIO</button></main></div>;
  return <div className="app"><header className="top"><button className="back" onClick={onBack}>← Volver</button><div className="brand">GUÍA<span>·</span>ME</div></header>
@@ -228,6 +233,8 @@ function Inscription({paises,ciudades,zonas,onBack}:{paises:Pais[];ciudades:Ciud
   <label>Tipo de cocina</label><input value={cocina} onChange={e=>setCocina(e.target.value)} placeholder="Ej. Mexicana, italiana, árabe…"/>
   <label>¿Qué se sirve / cuál es la especialidad?</label><input value={antojo} onChange={e=>setAntojo(e.target.value)} placeholder="Ej. Hamburguesas, tacos, BBQ…"/><p className="lead">Puedes poner varias, separadas por comas.</p>
   <label>Rango de precio</label><input value={precio} onChange={e=>setPrecio(e.target.value)} placeholder="Ej. $20–35 por persona"/>
+  <label>Foto del restaurante <span className="optional">OPCIONAL</span></label>
+  <div className="photo-upload">{photoPreview?<img src={photoPreview} alt="Vista previa del restaurante" className="photo-preview"/>:<div className="photo-placeholder">＋ FOTO PRINCIPAL</div>}<input className="photo-input" type="file" accept="image/jpeg,image/png,image/webp" onChange={e=>{const f=e.target.files?.[0]??null;setPhoto(f);setPhotoPreview(f?URL.createObjectURL(f):"")}}/><p className="lead">Una foto ayuda a que la ficha cobre vida. Puedes añadirla ahora o dejarla para después.</p></div>
   {error&&<div className="error">{error}</div>}
   <button className="primary" disabled={!name.trim()||!pais.trim()||!ciudad.trim()||!zona.trim()||!direccion.trim()||saving} onClick={save}>{saving?"ENVIANDO…":"INSCRIBIR RESTAURANTE"}</button>
  </div></main></div>
