@@ -4,3 +4,158 @@
 @media(max-width:700px){.top{height:66px;padding:0 18px}.tag{display:none}.top .secondary{font-size:9px}.hero,.results{padding:48px 18px 70px}.card{padding:22px;margin-top:38px}.intro h1,.results h1{font-size:53px}.search-mode{grid-template-columns:1fr}.restaurant{min-height:0}.rank{width:38px;min-width:38px;padding-top:21px;font-size:23px}.card-image{width:105px;min-width:105px;height:105px}.rbody{padding:18px 14px}.restaurant h2{font-size:24px}.scores{gap:8px;justify-content:space-between}.scores span{font-size:8px}.scores b{font-size:12px}.why{display:none}.nav-actions{display:grid;grid-template-columns:1fr}.nav-button{text-align:center}.detail-section{padding:22px}}
 
 .optional{font-size:9px;letter-spacing:.08em;color:#9a9387;margin-left:6px}.photo-upload{position:relative;border:1px dashed #c8bead;background:#fffdf8;min-height:150px;padding:14px;margin-top:8px;overflow:hidden}.photo-placeholder{min-height:110px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;letter-spacing:.12em;color:#8a806f}.photo-preview{display:block;width:100%;max-height:300px;object-fit:cover}.photo-input{position:absolute;inset:0;width:100%!important;height:100%!important;opacity:0;cursor:pointer}.photo-upload .lead{position:relative;z-index:2;pointer-events:none;background:rgba(255,253,248,.88);padding:7px;margin:8px 0 0;font-size:11px}
+
+
+/* GUÍA·ME — Editorial Premium v2 */
+:root{
+  --ink:#171812;
+  --ink-soft:#2a2d25;
+  --gold:#9b7330;
+  --gold-soft:#c5a66a;
+  --cream:#f3eee3;
+  --paper:#fffdf8;
+  --olive:#5c654f;
+  --line:#d8cfbf;
+  --muted:#706b61;
+}
+body{
+  background:
+    radial-gradient(circle at 90% -5%,rgba(197,166,106,.12),transparent 30%),
+    linear-gradient(135deg,#f7f3ea 0%,#f1ece1 55%,#ebe5d8 100%);
+}
+body:before{
+  content:"";
+  position:fixed;inset:0;pointer-events:none;opacity:.035;z-index:0;
+  background-image:radial-gradient(#171812 .55px,transparent .55px);
+  background-size:5px 5px;
+}
+.app{position:relative;z-index:1}
+.top{
+  height:74px;
+  padding:0 clamp(18px,5vw,72px);
+  border-bottom:1px solid rgba(216,207,191,.8);
+  background:rgba(247,243,234,.86);
+  box-shadow:0 8px 28px rgba(45,38,25,.035);
+}
+.brand{
+  font-family:"DM Sans",sans-serif;
+  font-size:19px;
+  font-weight:700;
+  letter-spacing:.22em;
+}
+.brand span{color:var(--gold)}
+.tag{font-size:9px;letter-spacing:.22em;color:#81796b}
+.hero,.results{position:relative}
+.hero{padding-top:82px}
+.intro{max-width:780px}
+.eyebrow{font-size:9px;letter-spacing:.25em;color:var(--gold);position:relative}
+.eyebrow:after{
+  content:"";display:inline-block;width:34px;height:1px;background:var(--gold);
+  vertical-align:middle;margin-left:12px;opacity:.65
+}
+.intro h1,.results h1{
+  font-size:clamp(58px,8vw,100px);
+  letter-spacing:-.045em;
+  line-height:.87;
+  margin:22px 0 28px;
+}
+.intro h1 em,.results h1 em{color:var(--olive)}
+.lead{font-size:16px;line-height:1.7;color:#625e55}
+.card{
+  position:relative;
+  margin-top:58px;
+  padding:38px;
+  border:1px solid rgba(216,207,191,.95);
+  background:rgba(255,253,248,.82);
+  box-shadow:0 28px 90px rgba(66,53,30,.09);
+}
+.card:before{
+  content:"GUÍA·ME";
+  position:absolute;right:24px;top:20px;
+  font-family:"Playfair Display",serif;font-size:10px;letter-spacing:.18em;color:#b7aa92;
+}
+.card h2{font-size:33px;margin-bottom:28px}
+.search-mode{gap:0;border:1px solid var(--line)}
+.search-mode .chip{
+  border:0;border-radius:0;background:transparent;padding:17px 14px;
+}
+.search-mode .chip.active{background:var(--ink);color:#fff}
+.chip{
+  border-color:#d3cab9;
+  background:rgba(255,253,248,.92);
+  border-radius:3px;
+}
+.chip.active{background:var(--olive);border-color:var(--olive)}
+.primary{
+  background:var(--ink);
+  border-color:var(--ink);
+  min-height:54px;
+  letter-spacing:.18em;
+  box-shadow:0 12px 25px rgba(23,24,18,.12);
+}
+.primary:hover{background:var(--olive);border-color:var(--olive);transform:translateY(-1px)}
+.secondary{background:rgba(255,253,248,.55)}
+.results{padding-top:66px}
+.results>h1{max-width:900px}
+.cards{gap:18px;margin-top:48px}
+.restaurant{
+  min-height:210px;
+  border-color:#d8cfbf;
+  background:rgba(255,253,248,.9);
+  box-shadow:0 8px 25px rgba(66,53,30,.035);
+}
+.restaurant:hover{
+  transform:translateY(-4px);
+  box-shadow:0 24px 55px rgba(66,53,30,.12);
+  border-color:#c2b399;
+}
+.rank{
+  width:68px;min-width:68px;
+  font-size:22px;color:#b4aa99;
+}
+.card-image{width:210px;min-width:210px;height:210px}
+.card-image-fallback{
+  background:linear-gradient(145deg,#e6dfd1,#f8f3e8);
+  color:#95846a;
+}
+.rbody{padding:27px 30px}
+.match{
+  background:#e9e1d1;color:#6f5428;
+  padding:7px 11px;font-size:9px;letter-spacing:.17em
+}
+.restaurant h2{font-size:34px;letter-spacing:-.02em}
+.meta{font-size:13px}
+.scores{
+  margin:22px 0 18px;
+  padding:13px 0;
+  border-color:#e2d9ca;
+}
+.scores b{color:var(--olive)}
+.detail-section{
+  border-color:#d8cfbf;
+  background:rgba(255,253,248,.88);
+  box-shadow:0 14px 35px rgba(66,53,30,.045);
+}
+.detail-image{
+  max-height:520px;
+  object-fit:cover;
+  box-shadow:0 18px 55px rgba(66,53,30,.12);
+}
+.detail-section h2{font-size:31px}
+.nav-button:hover{background:var(--olive);border-color:var(--olive)}
+footer{background:rgba(255,253,248,.28)}
+@media(max-width:700px){
+  .top{height:62px}
+  .hero{padding-top:52px}
+  .hero,.results{padding-left:17px;padding-right:17px}
+  .intro h1,.results h1{font-size:55px}
+  .card{padding:21px;margin-top:40px}
+  .card:before{display:none}
+  .restaurant{min-height:0}
+  .rank{width:32px;min-width:32px}
+  .card-image{width:108px;min-width:108px;height:108px}
+  .rbody{padding:17px 13px}
+  .restaurant h2{font-size:25px}
+  .scores{gap:6px}
+  .scores b{font-size:11px}
+}
