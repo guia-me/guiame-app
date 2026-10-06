@@ -156,6 +156,24 @@ function Detalle() {
               </Suspense>
             </ClientOnly>
           </div>
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            <a
+              className="btn-outline w-full text-center"
+              href={`https://www.google.com/maps/dir/?api=1&destination=${r.lat},${r.lng}`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Cómo llegar con Google Maps →
+            </a>
+            <a
+              className="btn-outline w-full text-center"
+              href={`https://www.waze.com/ul?ll=${r.lat}%2C${r.lng}&navigate=yes`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Abrir en Waze →
+            </a>
+          </div>
         </section>
       )}
 
