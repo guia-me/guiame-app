@@ -15,7 +15,7 @@ const RESTAURANT_REFERENCE_IMAGES = [
   "https://images.unsplash.com/photo-1566889110088-1119b49ce526?auto=format&fit=crop&w=900&q=78",
 ];
 
-const COUNTRY_IMAGES:Record<string,string>={"Panamá":"https://images.unsplash.com/photo-1512790901417-3c1b2f1d2d1b?auto=format&fit=crop&w=900&q=82","Panama":"https://images.unsplash.com/photo-1512790901417-3c1b2f1d2d1b?auto=format&fit=crop&w=900&q=82","México":"https://images.unsplash.com/photo-1518105779142-d975f22f1b0a?auto=format&fit=crop&w=900&q=82","Mexico":"https://images.unsplash.com/photo-1518105779142-d975f22f1b0a?auto=format&fit=crop&w=900&q=82","Chile":"https://images.unsplash.com/photo-1505654207345-2b4a4a2a0f8b?auto=format&fit=crop&w=900&q=82"}; const countryImage=(name:string)=>COUNTRY_IMAGES[name]||"https://images.unsplash.com/photo-1523731407965-2430cd12f5e4?auto=format&fit=crop&w=900&q=82";
+const COUNTRY_IMAGES:Record<string,string>={"Panamá":"https://images.unsplash.com/photo-1587759301533-ae42d7065a80?auto=format&fit=crop&w=1600&q=82","Panama":"https://images.unsplash.com/photo-1587759301533-ae42d7065a80?auto=format&fit=crop&w=1600&q=82","México":"https://images.unsplash.com/photo-1518105779142-d975f22f1b0a?auto=format&fit=crop&w=900&q=82","Mexico":"https://images.unsplash.com/photo-1518105779142-d975f22f1b0a?auto=format&fit=crop&w=900&q=82","Chile":"https://images.unsplash.com/photo-1505654207345-2b4a4a2a0f8b?auto=format&fit=crop&w=900&q=82"}; const countryImage=(name:string)=>COUNTRY_IMAGES[name]||"https://images.unsplash.com/photo-1523731407965-2430cd12f5e4?auto=format&fit=crop&w=900&q=82";
 
 const clean = (v:any): Restaurante => ({
   id:v.id, nombre:v.nombre, pais_id:v.pais_id, ciudad_id:v.ciudad_id, zona_id:v.zona_id,
@@ -121,7 +121,16 @@ export default function App() {
       }
       if(e)throw e;
       const rs=data.map(clean);
-      const ranked=rs.map(r=>({r,m:calcularMatch(r,ctx).match,dist:(ctx.usarUbicacion&&ctx.lat!=null&&ctx.lng!=null&&r.lat!=null&&r.lng!=null)?distanciaKm(ctx.lat,ctx.lng,r.lat,r.lng):null}))
+      // Si el usuario eligió una cocina/antojo y existen candidatos que sí coinciden,
+      // no mostramos restaurantes de otra identidad gastronómica solo para completar 3.
+      const normalize = (x:string) => x.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
+      const cocinaCoincide = (r:Restaurante) => ctx.cocinas.length === 0 || r.cocina.some(x => ctx.cocinas.some(c => normalize(x) === normalize(c)));
+      const antojoCoincide = (r:Restaurante) => ctx.antojos.length === 0 || ctx.antojos.some(a => { const b=normalize(a); return (r.especialidades??[]).concat(r.platos_recomendados??"").some(x=>normalize(x).includes(b)); });
+      const cocinaCandidates = ctx.cocinas.length ? rs.filter(cocinaCoincide) : rs;
+      const filtered = cocinaCandidates.length ? cocinaCandidates : rs;
+      const antojoCandidates = ctx.antojos.length ? filtered.filter(antojoCoincide) : filtered;
+      const candidates = antojoCandidates.length ? antojoCandidates : filtered;
+      const ranked=candidates.map(r=>({r,m:calcularMatch(r,ctx).match,dist:(ctx.usarUbicacion&&ctx.lat!=null&&ctx.lng!=null&&r.lat!=null&&r.lng!=null)?distanciaKm(ctx.lat,ctx.lng,r.lat,r.lng):null}))
         .sort((a,b)=>b.m-a.m || ((a.dist??Infinity)-(b.dist??Infinity))).map(x=>x.r);
       guardarContexto(ctx);setResults(ranked);setScreen("results");
     }catch(e){setError(e instanceof Error?e.message:String(e));}
