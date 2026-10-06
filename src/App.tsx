@@ -42,7 +42,9 @@ export default function App() {
   const [favorites,setFavorites]=useState<string[]>(()=>leerFavoritos());
   const [loading,setLoading]=useState(true);
   const [searching,setSearching]=useState(false);
-  const [error,setError]=useState<string|null>(null);\n  const [locationStatus,setLocationStatus]=useState<"detecting"|"ready"|"manual"|"error">("detecting");\n  const [showLocationPicker,setShowLocationPicker]=useState(false);
+  const [error,setError]=useState<string|null>(null);
+  const [locationStatus,setLocationStatus]=useState<"detecting"|"ready"|"manual"|"error">("detecting");
+  const [showLocationPicker,setShowLocationPicker]=useState(false);
 
   useEffect(()=>{
     let alive=true;
@@ -61,7 +63,43 @@ export default function App() {
     return ()=>{alive=false};
   },[]);
 
-  useEffect(()=>{\n    if(loading || !paises.length || !ciudades.length) return;\n    if(ctx.usarUbicacion && ctx.lat != null && ctx.lng != null){ setLocationStatus("ready"); return; }\n    if(!navigator.geolocation){ setLocationStatus("manual"); return; }\n    let cancelled=false;\n    setLocationStatus("detecting");\n    navigator.geolocation.getCurrentPosition(async pos=>{\n      if(cancelled)return;\n      const lat=pos.coords.latitude, lng=pos.coords.longitude;\n      let paisId:string|null=null, paisNombre:string|undefined, ciudadId:string|null=null, ciudadNombre:string|undefined;\n      try{\n        const url="https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat="+lat+"&lon="+lng+"&zoom=10&addressdetails=1&accept-language=es";\n        const response=await fetch(url,{headers:{Accept:"application/json"}});\n        if(response.ok){\n          const geo=await response.json();\n          const address=geo.address??{};\n          const iso=String(address.country_code??"").toUpperCase();\n          const country=paises.find(p=>String(p.codigo_iso2??"").toUpperCase()===iso) ?? paises.find(p=>p.nombre.toLowerCase()===String(address.country??"").toLowerCase());\n          if(country){\n            paisId=country.id; paisNombre=country.nombre;\n            const cityName=address.city??address.town??address.municipality??address.village;\n            const city=ciudades.find(c=>c.pais_id===country.id && c.nombre.toLowerCase()===String(cityName??"").toLowerCase());\n            if(city){ciudadId=city.id;ciudadNombre=city.nombre;}\n          }\n        }\n      }catch{}\n      if(cancelled)return;\n      const patch={usarUbicacion:true,lat,lng,paisId,paisNombre,ciudadId,ciudadNombre,zonaId:null,zonaNombre:ciudadNombre?("Cerca de "+ciudadNombre):"Cerca de ti"};\n      set(patch);\n      guardarContexto({...ctx,...patch});\n      setLocationStatus("ready");\n    },()=>{if(!cancelled){setLocationStatus("manual");setShowLocationPicker(true)}},{enableHighAccuracy:false,timeout:8000,maximumAge:600000});\n    return()=>{cancelled=true};\n  // eslint-disable-next-line react-hooks/exhaustive-deps\n  },[loading,paises.length,ciudades.length]);\n\n  const cities=useMemo(()=>ciudades.filter(x=>x.pais_id===ctx.paisId),[ciudades,ctx.paisId]);
+  useEffect(()=>{
+    if(loading || !paises.length || !ciudades.length) return;
+    if(ctx.usarUbicacion && ctx.lat != null && ctx.lng != null){ setLocationStatus("ready"); return; }
+    if(!navigator.geolocation){ setLocationStatus("manual"); return; }
+    let cancelled=false;
+    setLocationStatus("detecting");
+    navigator.geolocation.getCurrentPosition(async pos=>{
+      if(cancelled)return;
+      const lat=pos.coords.latitude, lng=pos.coords.longitude;
+      let paisId:string|null=null, paisNombre:string|undefined, ciudadId:string|null=null, ciudadNombre:string|undefined;
+      try{
+        const url="https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat="+lat+"&lon="+lng+"&zoom=10&addressdetails=1&accept-language=es";
+        const response=await fetch(url,{headers:{Accept:"application/json"}});
+        if(response.ok){
+          const geo=await response.json();
+          const address=geo.address??{};
+          const iso=String(address.country_code??"").toUpperCase();
+          const country=paises.find(p=>String(p.codigo_iso2??"").toUpperCase()===iso) ?? paises.find(p=>p.nombre.toLowerCase()===String(address.country??"").toLowerCase());
+          if(country){
+            paisId=country.id; paisNombre=country.nombre;
+            const cityName=address.city??address.town??address.municipality??address.village;
+            const city=ciudades.find(c=>c.pais_id===country.id && c.nombre.toLowerCase()===String(cityName??"").toLowerCase());
+            if(city){ciudadId=city.id;ciudadNombre=city.nombre;}
+          }
+        }
+      }catch{}
+      if(cancelled)return;
+      const patch={usarUbicacion:true,lat,lng,paisId,paisNombre,ciudadId,ciudadNombre,zonaId:null,zonaNombre:ciudadNombre?("Cerca de "+ciudadNombre):"Cerca de ti"};
+      set(patch);
+      guardarContexto({...ctx,...patch});
+      setLocationStatus("ready");
+    },()=>{if(!cancelled){setLocationStatus("manual");setShowLocationPicker(true)}},{enableHighAccuracy:false,timeout:8000,maximumAge:600000});
+    return()=>{cancelled=true};
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[loading,paises.length,ciudades.length]);
+
+  const cities=useMemo(()=>ciudades.filter(x=>x.pais_id===ctx.paisId),[ciudades,ctx.paisId]);
   const zones=useMemo(()=>zonas.filter(x=>x.ciudad_id===ctx.ciudadId),[zonas,ctx.ciudadId]);
   const set=(patch:Partial<Contexto>)=>setCtx(x=>({...x,...patch}));
 
@@ -97,7 +135,52 @@ export default function App() {
 
   return <div className="app">
     <header className="top"><div className="brand">GUÍA<span>·</span>ME</div><div className="tag">COME MEJOR. DECIDE MEJOR.</div><button className="secondary" onClick={()=>setScreen("favorites")}>♡ FAVORITOS ({favorites.length})</button></header>
-    <main className="hero">\n      <section className="intro">\n        <div className="geo-country-hero">\n          {ctx.paisNombre ? <img src={countryImage(ctx.paisNombre)} alt={ctx.paisNombre}/> : <div className="geo-country-placeholder">{locationStatus==="detecting"?"DETECTANDO TU UBICACIÓN":"ELIGE TU UBICACIÓN"}</div>}\n          {ctx.paisNombre&&<div className="geo-country-overlay"><span>ESTÁS EN</span><strong>{ctx.paisNombre}</strong>{ctx.ciudadNombre&&<small>{ctx.ciudadNombre}</small>}</div>}\n        </div>\n        <p className="eyebrow">TU GUÍA GASTRONÓMICA PERSONAL</p>\n        <h1>¿Dónde comemos<br/><em>hoy?</em></h1>\n        <p className="lead">No te mostramos cien restaurantes. Encontramos los que mejor encajan contigo.</p>\n      </section>\n      <section className="card">\n        <h2>¿Qué te apetece?</h2>\n        <div className="location-summary">\n          <div><span>📍</span><div><strong>{ctx.paisNombre ? (ctx.ciudadNombre ? ctx.ciudadNombre + " · " + ctx.paisNombre : ctx.paisNombre) : locationStatus==="detecting" ? "Detectando tu ubicación…" : "Ubicación no detectada"}</strong><small>{ctx.usarUbicacion ? "Ubicación actual" : "Selección manual"}</small></div></div>\n          <button className="change-location" type="button" onClick={()=>setShowLocationPicker(v=>!v)}>{showLocationPicker?"CERRAR":"CAMBIAR UBICACIÓN"}</button>\n        </div>\n        {showLocationPicker&&<div className="location-picker">\n          <p className="picker-title">Elige dónde quieres buscar</p>\n          <div className="country-cards">{paises.map(p=><button key={p.id} className={ctx.paisId===p.id&&!ctx.usarUbicacion?"country-card active":"country-card"} onClick={()=>{set({paisId:p.id,paisNombre:p.nombre,ciudadId:null,ciudadNombre:undefined,zonaId:null,zonaNombre:undefined,usarUbicacion:false,lat:null,lng:null});setLocationStatus("manual");}}><img src={countryImage(p.nombre)} alt="" loading="lazy"/><span>{p.nombre}</span></button>)}</div>\n          {ctx.paisId&&!ctx.usarUbicacion&&<><label>Ciudad</label><select value={ctx.ciudadId??""} onChange={e=>{const x=cities.find(v=>v.id===e.target.value);set({ciudadId:e.target.value||null,ciudadNombre:x?.nombre,zonaId:null,zonaNombre:undefined})}}><option value="">Selecciona una ciudad</option>{cities.map(x=><option key={x.id} value={x.id}>{x.nombre}</option>)}</select></>}\n          {ctx.ciudadId&&!ctx.usarUbicacion&&<><label>Zona</label><select value={ctx.zonaId??""} onChange={e=>{const x=zones.find(v=>v.id===e.target.value);set({zonaId:e.target.value||null,zonaNombre:x?.nombre})}}><option value="">Selecciona una zona</option>{zones.map(x=><option key={x.id} value={x.id}>{x.nombre}</option>)}</select></>}\n        </div>}\n        <div className="search-mode"><button className={ctx.modoBusqueda==="restaurante"?"chip active":"chip"} onClick={()=>set({modoBusqueda:"restaurante",antojos:[]})}>BUSCO UN RESTAURANTE</button><button className={ctx.modoBusqueda==="antojo"?"chip active":"chip"} onClick={()=>set({modoBusqueda:"antojo",cocinas:[]})}>TENGO UN ANTOJO</button></div>\n        {error&&<div className="error">{error}</div>}\n        {loading?<div className="loading">Cargando lugares…</div>:<>\n          {(ctx.zonaId||ctx.usarUbicacion)&&<Filters ctx={ctx} set={set}/>}\n          <div className="bottom-actions">\n            <div className="location-box">\n              <button className={ctx.usarUbicacion?"secondary active-location":"secondary"} type="button" onClick={()=>{\n                if(!navigator.geolocation){setError("Tu navegador no permite geolocalización.");return;}\n                setError(null);setLocationStatus("detecting");\n                navigator.geolocation.getCurrentPosition(\n                  pos=>set({usarUbicacion:true,lat:pos.coords.latitude,lng:pos.coords.longitude,zonaId:null,zonaNombre:"Cerca de ti"}),\n                  err=>setError(err.code===1?"Permite el acceso a tu ubicación para buscar restaurantes cerca de ti.":"No pudimos obtener tu ubicación. Puedes elegir una zona manualmente."),\n                  {enableHighAccuracy:false,timeout:8000,maximumAge:600000}\n                );\n              }}>{ctx.usarUbicacion?"📍 UBICACIÓN ACTIVADA":"📍 USAR MI UBICACIÓN"}</button>\n              {ctx.usarUbicacion&&<p className="location-note">Buscaremos restaurantes cercanos y los ordenaremos por MATCH + distancia.</p>}\n            </div>\n            <button className="primary" disabled={(!ctx.zonaId && !(ctx.usarUbicacion&&ctx.lat!=null&&ctx.lng!=null))||searching} onClick={buscar}>{searching?"CALCULANDO MATCH…":"ENCONTRAR MI MATCH →"}</button>\n          </div>\n          <button className="secondary" onClick={()=>setScreen("inscribe")}>＋ INSCRIBIR RESTAURANTE</button>\n        </>}\n      </section>\n    </main>\n    <footer>GUÍA·ME · recomendaciones construidas con datos + comunidad</footer>
+    <main className="hero">
+      <section className="intro">
+        <div className="geo-country-hero">
+          {ctx.paisNombre ? <img src={countryImage(ctx.paisNombre)} alt={ctx.paisNombre}/> : <div className="geo-country-placeholder">{locationStatus==="detecting"?"DETECTANDO TU UBICACIÓN":"ELIGE TU UBICACIÓN"}</div>}
+          {ctx.paisNombre&&<div className="geo-country-overlay"><span>ESTÁS EN</span><strong>{ctx.paisNombre}</strong>{ctx.ciudadNombre&&<small>{ctx.ciudadNombre}</small>}</div>}
+        </div>
+        <p className="eyebrow">TU GUÍA GASTRONÓMICA PERSONAL</p>
+        <h1>¿Dónde comemos<br/><em>hoy?</em></h1>
+        <p className="lead">No te mostramos cien restaurantes. Encontramos los que mejor encajan contigo.</p>
+      </section>
+      <section className="card">
+        <h2>¿Qué te apetece?</h2>
+        <div className="location-summary">
+          <div><span>📍</span><div><strong>{ctx.paisNombre ? (ctx.ciudadNombre ? ctx.ciudadNombre + " · " + ctx.paisNombre : ctx.paisNombre) : locationStatus==="detecting" ? "Detectando tu ubicación…" : "Ubicación no detectada"}</strong><small>{ctx.usarUbicacion ? "Ubicación actual" : "Selección manual"}</small></div></div>
+          <button className="change-location" type="button" onClick={()=>setShowLocationPicker(v=>!v)}>{showLocationPicker?"CERRAR":"CAMBIAR UBICACIÓN"}</button>
+        </div>
+        {showLocationPicker&&<div className="location-picker">
+          <p className="picker-title">Elige dónde quieres buscar</p>
+          <div className="country-cards">{paises.map(p=><button key={p.id} className={ctx.paisId===p.id&&!ctx.usarUbicacion?"country-card active":"country-card"} onClick={()=>{set({paisId:p.id,paisNombre:p.nombre,ciudadId:null,ciudadNombre:undefined,zonaId:null,zonaNombre:undefined,usarUbicacion:false,lat:null,lng:null});setLocationStatus("manual");}}><img src={countryImage(p.nombre)} alt="" loading="lazy"/><span>{p.nombre}</span></button>)}</div>
+          {ctx.paisId&&!ctx.usarUbicacion&&<><label>Ciudad</label><select value={ctx.ciudadId??""} onChange={e=>{const x=cities.find(v=>v.id===e.target.value);set({ciudadId:e.target.value||null,ciudadNombre:x?.nombre,zonaId:null,zonaNombre:undefined})}}><option value="">Selecciona una ciudad</option>{cities.map(x=><option key={x.id} value={x.id}>{x.nombre}</option>)}</select></>}
+          {ctx.ciudadId&&!ctx.usarUbicacion&&<><label>Zona</label><select value={ctx.zonaId??""} onChange={e=>{const x=zones.find(v=>v.id===e.target.value);set({zonaId:e.target.value||null,zonaNombre:x?.nombre})}}><option value="">Selecciona una zona</option>{zones.map(x=><option key={x.id} value={x.id}>{x.nombre}</option>)}</select></>}
+        </div>}
+        <div className="search-mode"><button className={ctx.modoBusqueda==="restaurante"?"chip active":"chip"} onClick={()=>set({modoBusqueda:"restaurante",antojos:[]})}>BUSCO UN RESTAURANTE</button><button className={ctx.modoBusqueda==="antojo"?"chip active":"chip"} onClick={()=>set({modoBusqueda:"antojo",cocinas:[]})}>TENGO UN ANTOJO</button></div>
+        {error&&<div className="error">{error}</div>}
+        {loading?<div className="loading">Cargando lugares…</div>:<>
+          {(ctx.zonaId||ctx.usarUbicacion)&&<Filters ctx={ctx} set={set}/>}
+          <div className="bottom-actions">
+            <div className="location-box">
+              <button className={ctx.usarUbicacion?"secondary active-location":"secondary"} type="button" onClick={()=>{
+                if(!navigator.geolocation){setError("Tu navegador no permite geolocalización.");return;}
+                setError(null);setLocationStatus("detecting");
+                navigator.geolocation.getCurrentPosition(
+                  pos=>set({usarUbicacion:true,lat:pos.coords.latitude,lng:pos.coords.longitude,zonaId:null,zonaNombre:"Cerca de ti"}),
+                  err=>setError(err.code===1?"Permite el acceso a tu ubicación para buscar restaurantes cerca de ti.":"No pudimos obtener tu ubicación. Puedes elegir una zona manualmente."),
+                  {enableHighAccuracy:false,timeout:8000,maximumAge:600000}
+                );
+              }}>{ctx.usarUbicacion?"📍 UBICACIÓN ACTIVADA":"📍 USAR MI UBICACIÓN"}</button>
+              {ctx.usarUbicacion&&<p className="location-note">Buscaremos restaurantes cercanos y los ordenaremos por MATCH + distancia.</p>}
+            </div>
+            <button className="primary" disabled={(!ctx.zonaId && !(ctx.usarUbicacion&&ctx.lat!=null&&ctx.lng!=null))||searching} onClick={buscar}>{searching?"CALCULANDO MATCH…":"ENCONTRAR MI MATCH →"}</button>
+          </div>
+          <button className="secondary" onClick={()=>setScreen("inscribe")}>＋ INSCRIBIR RESTAURANTE</button>
+        </>}
+      </section>
+    </main>
+    <footer>GUÍA·ME · recomendaciones construidas con datos + comunidad</footer>
   </div>
 }
 
