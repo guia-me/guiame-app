@@ -25,9 +25,11 @@ export const Route = createFileRoute("/mapa")({
 function Mapa() {
   const [c, setC] = useState<Contexto | null>(null);
   useEffect(() => setC(leerContexto()), []);
-  const { data } = useQuery(mapaQuery(c?.ciudadId ?? null));
+  const { data } = useQuery(
+    mapaQuery(c?.ciudadId ?? null, c?.zonaId ?? null, c?.lat ?? null, c?.lng ?? null, c?.usarUbicacion ?? false),
+  );
 
-  const lugares = c?.zonaId ? (data ?? []).filter((r) => r.zona_id === c.zonaId) : (data ?? []);
+  const lugares = data ?? [];
   const conCoords = lugares.filter((r) => r.lat != null && r.lng != null);
   const centro: [number, number] =
     c?.usarUbicacion && c.lat != null && c.lng != null
