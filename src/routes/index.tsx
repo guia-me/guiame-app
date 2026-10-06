@@ -42,7 +42,10 @@ function Inicio() {
 
   useEffect(() => {
     const guardado = leerContexto();
-    if (guardado) setC(guardado);
+    if (guardado) {
+      setC(guardado);
+      setModoBusqueda(guardado.usarUbicacion ? "ubicacion" : guardado.zonaId ? "zona" : null);
+    }
     setListo(true);
   }, []);
 
