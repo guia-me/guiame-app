@@ -170,22 +170,7 @@ export default function App() {
         {error&&<div className="error">{error}</div>}
         {loading?<div className="loading">Cargando lugares…</div>:<>
           {(ctx.zonaId||ctx.usarUbicacion)&&<Filters ctx={ctx} set={set}/>}
-          <div className="bottom-actions">
-            <div className="location-box">
-              <button className={ctx.usarUbicacion?"secondary active-location":"secondary"} type="button" onClick={()=>{
-                if(!navigator.geolocation){setError("Tu navegador no permite geolocalización.");return;}
-                setError(null);setLocationStatus("detecting");
-                navigator.geolocation.getCurrentPosition(
-                  pos=>set({usarUbicacion:true,lat:pos.coords.latitude,lng:pos.coords.longitude,zonaId:null,zonaNombre:"Cerca de ti"}),
-                  err=>setError(err.code===1?"Permite el acceso a tu ubicación para buscar restaurantes cerca de ti.":"No pudimos obtener tu ubicación. Puedes elegir una zona manualmente."),
-                  {enableHighAccuracy:false,timeout:8000,maximumAge:600000}
-                );
-              }}>{ctx.usarUbicacion?"📍 UBICACIÓN ACTIVADA":"📍 USAR MI UBICACIÓN"}</button>
-              {ctx.usarUbicacion&&<p className="location-note">Buscaremos restaurantes cercanos y los ordenaremos por MATCH + distancia.</p>}
-            </div>
-            <button className="primary" disabled={(!ctx.zonaId && !(ctx.usarUbicacion&&ctx.lat!=null&&ctx.lng!=null))||searching} onClick={buscar}>{searching?"CALCULANDO MATCH…":"ENCONTRAR MI MATCH →"}</button>
-          </div>
-          <button className="secondary" onClick={()=>setScreen("inscribe")}>＋ INSCRIBIR RESTAURANTE</button>
+          <div className="bottom-actions">\n            <button className="primary" disabled={(!ctx.zonaId && !(ctx.usarUbicacion&&ctx.lat!=null&&ctx.lng!=null))||searching} onClick={buscar}>{searching?"CALCULANDO MATCH…":"ENCONTRAR MI MATCH →"}</button>\n          </div>\n          <button className="secondary" onClick={()=>setScreen("inscribe")}>＋ INSCRIBIR RESTAURANTE</button>
         </>}
       </section>
     </main>
