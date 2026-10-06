@@ -29,7 +29,11 @@ export function Shell({
     <div className="min-h-screen bg-background pb-24">
       <header className="border-b border-border">
         <div className="mx-auto flex max-w-3xl items-baseline justify-between px-5 py-4">
-          <Link to="/">
+          <Link
+            to="/"
+            aria-label="Ir al inicio de GUÍA·ME"
+            className="inline-flex items-center rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold"
+          >
             <Marca />
           </Link>
           <span className="eyebrow">Guía gastronómica</span>
