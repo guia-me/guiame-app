@@ -399,3 +399,5 @@ footer{background:#11191b;color:#aaa79d;border-top-color:#2c3637}
   .bottom-actions{margin-top:24px}
   .card>.secondary{min-height:46px}
 }
+
+.results-more{max-width:420px;margin:22px auto 0;display:block;background:transparent;color:var(--ink);border-color:#bdb4a4}.results-more:hover{background:#1b2729;color:#fff;border-color:#1b2729}
