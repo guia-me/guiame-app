@@ -220,23 +220,19 @@ function Detail({r,ctx,favorite,onToggleFavorite,onBack}:{r:Restaurante;ctx:Cont
  community.forEach(x=>{const raw=(x.plato??"").trim();if(validDish(raw)){const d=normalizeDish(raw);dishCounts.set(d,(dishCounts.get(d)??0)+1)}});
  const uniqueDishes=[...dishCounts.entries()].sort((a,b)=>b[1]-a[1]).map(([name,count])=>({name,count}));
  const latestComment=community.find(x=>(x.comentario??"").trim())?.comentario?.trim();
- const recommendation=r.descripcion?.trim()||(uniqueDishes.length?"La comunidad destaca especialmente "+uniqueDishes[0].name.toLowerCase()+".":"Una recomendación construida con la experiencia de la comunidad GUÍA·ME."); return <div className="app"><header className="top"><button className="back" onClick={onBack}>← Volver a resultados</button><div className="brand">GUÍA<span>·</span>ME</div></header>
- <main className="results"><p className="eyebrow">FICHA DEL RESTAURANTE</p><h1>{r.nombre}</h1><div className="match">{m.match}% MATCH{r.num_evaluaciones === 0 ? " · PROVISIONAL" : ""}</div>
- <p className="lead">{r.cocina.join(" · ")||"Gastronomía"} · {rangoPrecio(r)} · {ctx.zonaNombre}</p>
- <DetailRestaurantImage r={r}/>
- <section className="detail-section"><h2>VALORACIÓN GUÍA·ME</h2><div className="scores"><span>COCINA <b>{r.food_avg??"—"}/30</b></span><span>DECORACIÓN <b>{r.decor_avg??"—"}/30</b></span><span>SERVICIO <b>{r.service_avg??"—"}/30</b></span><span>PRECIO <b>{r.cost_avg??"—"}/30</b></span></div><p className="why">{m.razones.slice(0,3).map(x=>x.etiqueta+": "+x.detalle).join(" · ")}</p></section>
- <section className="detail-section"><h2>LA RECOMENDACIÓN</h2><p>{recommendation}</p>{uniqueDishes.length>0&&<><h3>LO QUE PEDIR</h3><p>{uniqueDishes.slice(0,3).map((d,i)=><span key={d.name}><strong>{d.name}</strong>{d.count>1?" · "+d.count+" menciones":" · Recomendado por la comunidad"}{i<Math.min(uniqueDishes.length,3)-1?" · ":""}</span>)}</p></>}{latestComment&&<><h3>EXPERIENCIA DE LA COMUNIDAD</h3><p>“{latestComment}”</p></>}<p className="lead">{community.length} evaluaciones{uniqueDishes.length?" · "+uniqueDishes.length+" plato"+(uniqueDishes.length===1?"":"s")+" válido"+(uniqueDishes.length===1?"":"s")+" mencionado"+(uniqueDishes.length===1?"":"s"):""}</p></section>
- <section className="detail-section"><p><strong>Precio:</strong> {rangoPrecio(r)} por persona</p><p>{r.direccion||"Dirección pendiente"}</p>{r.telefono&&<p>{r.telefono}</p>}{r.web&&<p><a href={r.web} target="_blank" rel="noreferrer">Visitar sitio web →</a></p>}</section>
- <section className="detail-section navigation-section"><h2>LLEVAME</h2><p>Elige cómo quieres llegar.</p><div className="nav-actions">
-   {r.lat!=null&&r.lng!=null ? <>
-     <a className="nav-button" href={`https://www.google.com/maps/dir/?api=1&destination=${r.lat},${r.lng}`} target="_blank" rel="noreferrer">GOOGLE MAPS →</a>
-     <a className="nav-button" href={`https://www.waze.com/ul?ll=${r.lat}%2C${r.lng}&navigate=yes`} target="_blank" rel="noreferrer">WAZE →</a>
-     <a className="nav-button" href={`https://m.uber.com/ul/?action=setPickup&dropoff[latitude]=${r.lat}&dropoff[longitude]=${r.lng}`} target="_blank" rel="noreferrer">UBER →</a>
-   </> : <a className="nav-button" href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(r.direccion||r.nombre)}`} target="_blank" rel="noreferrer">BUSCAR EN GOOGLE MAPS →</a>}
- </div></section>
- <button className="secondary" type="button" onClick={onToggleFavorite}>{favorite?"♥ GUARDADO EN FAVORITOS":"♡ GUARDAR EN FAVORITOS"}</button><button className="primary" type="button" onClick={()=>setShowEval(true)}>EVALUAR ESTE LUGAR</button></main></div>
+ const recommendation=r.descripcion?.trim()||(uniqueDishes.length?"La comunidad destaca especialmente "+uniqueDishes[0].name.toLowerCase()+".":"Una recomendación construida con la experiencia de la comunidad GUÍA·ME.");
+ return <div className="app"><header className="top"><button className="back" onClick={onBack}>← Volver a resultados</button><div className="brand">GUÍA<span>·</span>ME</div><button className="secondary" type="button" onClick={onToggleFavorite}>{favorite?"♥ Guardado":"♡ Guardar"}</button></header>
+ <main className="results detail-page">
+  <p className="eyebrow">TU MATCH</p>
+  <div className="detail-title-row"><div><h1>{r.nombre}</h1><p className="lead">{r.cocina.join(" · ")||"Gastronomía"} · {rangoPrecio(r)} · {ctx.zonaNombre}</p></div><div className="detail-match">{m.match}%<span>MATCH</span></div></div>
+  <DetailRestaurantImage r={r}/>
+  <section className="detail-section detail-highlight"><p className="eyebrow">¿POR QUÉ TE LO RECOMENDAMOS?</p><p className="why">{m.razones.slice(0,3).map(x=><span key={x.etiqueta}><strong>{x.etiqueta}</strong> {x.detalle}</span>)}</p></section>
+  <section className="detail-section"><h2>VALORACIÓN GUÍA·ME</h2><div className="scores scores-large"><span>COCINA <b>{r.food_avg??"—"}/30</b></span><span>DECORACIÓN <b>{r.decor_avg??"—"}/30</b></span><span>SERVICIO <b>{r.service_avg??"—"}/30</b></span><span>PRECIO <b>{r.cost_avg??"—"}/30</b></span></div></section>
+  <section className="detail-section"><p className="eyebrow">LA RECOMENDACIÓN</p><p className="detail-copy">{recommendation}</p>{uniqueDishes.length>0&&<><h3>LO QUE PEDIR</h3><p>{uniqueDishes.slice(0,3).map((d,i)=><span key={d.name}><strong>{d.name}</strong>{d.count>1?" · "+d.count+" menciones":" · Recomendado por la comunidad"}{i<Math.min(uniqueDishes.length,3)-1?" · ":""}</span>)}</p></>}{latestComment&&<><h3>EXPERIENCIA DE LA COMUNIDAD</h3><blockquote>“{latestComment}”</blockquote></>}<p className="lead">{community.length} evaluaciones{uniqueDishes.length?" · "+uniqueDishes.length+" platos mencionados":""}</p></section>
+  <section className="detail-section navigation-section"><p className="eyebrow">CÓMO LLEGAR</p><p>{r.direccion||"Dirección pendiente"}</p><div className="nav-actions">{r.lat!=null&&r.lng!=null?<><a className="nav-button" href={`https://www.google.com/maps/dir/?api=1&destination=${r.lat},${r.lng}`} target="_blank" rel="noreferrer">GOOGLE MAPS →</a><a className="nav-button" href={`https://www.waze.com/ul?ll=${r.lat}%2C${r.lng}&navigate=yes`} target="_blank" rel="noreferrer">WAZE →</a></>:<a className="nav-button" href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(r.direccion||r.nombre)}`} target="_blank" rel="noreferrer">BUSCAR EN GOOGLE MAPS →</a>}</div></section>
+  <div className="detail-actions"><button className="secondary" type="button" onClick={onToggleFavorite}>{favorite?"♥ GUARDADO EN FAVORITOS":"♡ GUARDAR EN FAVORITOS"}</button><button className="primary" type="button" onClick={()=>setShowEval(true)}>EVALUAR ESTE LUGAR</button></div>
+ </main></div>
 }
-
 
 function Favorites({ids,ctx,onBack,onSelect}:{ids:string[];ctx:Contexto;onBack:()=>void;onSelect:(r:Restaurante)=>void}){
  const [items,setItems]=useState<Restaurante[]>([]); const [loading,setLoading]=useState(true); const [error,setError]=useState<string|null>(null);
