@@ -54,7 +54,11 @@ function Matches() {
 
   return (
     <Shell titulo="Estos son tus 3 lugares" subtitulo={resumen(c)}>
-      <div className="space-y-5 py-6">
+      <div className="py-6">
+        <Link to="/mapa" className="btn-outline mb-5 w-full text-center">
+          Ver estos lugares en el mapa →
+        </Link>
+        <div className="space-y-5">
         {!c && <Vacio>Primero cuéntanos tu contexto en el inicio.</Vacio>}
         {c && isLoading && <p className="text-sm text-muted-foreground">Buscando…</p>}
         {c && !isLoading && top.length === 0 && (
@@ -84,6 +88,7 @@ function Matches() {
             </Link>
           </div>
         ))}
+        </div>
       </div>
     </Shell>
   );
