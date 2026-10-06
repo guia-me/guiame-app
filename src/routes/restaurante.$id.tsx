@@ -65,8 +65,12 @@ function Detalle() {
             <Heart size={22} fill={favorito ? "currentColor" : "none"} />
           </button>
         </div>
-        <div className="mt-4">
+        <div className="mt-4 flex items-end justify-between gap-4">
           <EstadoBadge estado={r.estado} />
+          <div className="text-right">
+            <p className="eyebrow">Precio por persona</p>
+            <p className="serif mt-1 text-2xl">{rangoPrecio(r)}</p>
+          </div>
         </div>
         <div className="rule-gold mt-5" />
       </div>
@@ -76,6 +80,9 @@ function Detalle() {
         <div className="mt-3">
           <Zagat r={r} />
         </div>
+        <p className="mt-4 text-xs text-muted-foreground">
+          Puntuaciones sobre 30. El precio se muestra aparte como rango real por persona.
+        </p>
         <p className="mt-3 text-xs text-muted-foreground">
           {r.num_evaluaciones} evaluaciones de comunidad
           {r.pct_volveria != null ? ` · ${r.pct_volveria}% volvería` : ""}
