@@ -375,3 +375,27 @@ footer{background:#11191b;color:#aaa79d;border-top-color:#2c3637}
 }
 
 /* deploy trigger: GUÍA·ME visual master */
+
+
+/* GUÍA·ME — Final visual pass 2026-10-06 */
+.bottom-actions{display:block;margin-top:30px}
+.bottom-actions .primary{width:100%;display:block}
+.card>.secondary{width:100%;margin-top:10px}
+@media(min-width:701px){
+  .hero{padding-left:24px;padding-right:24px}
+  .card{max-width:900px;margin-left:auto;margin-right:auto;border-radius:2px}
+  .intro{margin-left:auto;margin-right:auto}
+}
+@media(max-width:700px){
+  .top{padding:0 16px}
+  .top .secondary{font-size:8px;padding:9px 10px}
+  .geo-country-hero{border-radius:0}
+  .card{border-radius:0}
+  .search-mode{display:grid;grid-template-columns:1fr 1fr}
+  .search-mode .chip{min-height:48px}
+  .filters{gap:18px}
+  .chips{gap:7px}
+  .chip{min-height:40px;padding:10px 12px}
+  .bottom-actions{margin-top:24px}
+  .card>.secondary{min-height:46px}
+}
