@@ -401,3 +401,37 @@ footer{background:#11191b;color:#aaa79d;border-top-color:#2c3637}
 }
 
 .results-more{max-width:420px;margin:22px auto 0;display:block;background:transparent;color:var(--ink);border-color:#bdb4a4}.results-more:hover{background:#1b2729;color:#fff;border-color:#1b2729}
+
+
+/* GUÍA·ME — Restaurant detail visual master */
+.detail-page{padding-bottom:90px}
+.detail-title-row{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:26px}
+.detail-title-row h1{margin-bottom:8px}
+.detail-title-row .lead{margin-bottom:0}
+.detail-match{flex:0 0 auto;min-width:96px;padding:16px 14px;background:#1b2729;color:#d9bc76;text-align:center;font-family:"Playfair Display",serif;font-size:30px;line-height:1}
+.detail-match span{display:block;margin-top:6px;font-family:"DM Sans",sans-serif;font-size:8px;letter-spacing:.16em;color:#f4efe4}
+.detail-page .detail-image-wrap,.detail-page>.detail-image{width:100%;max-height:560px;object-fit:cover;margin-bottom:28px}
+.detail-page .detail-image-wrap{position:relative;overflow:hidden}
+.detail-page .detail-image-wrap .detail-image{margin:0;display:block}
+.detail-highlight{border-left:4px solid var(--gold);background:#1b2729;color:#f7f2e8}
+.detail-highlight .eyebrow{color:#d9bc76}
+.detail-highlight .why{display:grid;gap:10px;margin:0}
+.detail-highlight .why span{display:block}
+.detail-highlight .why strong{color:#d9bc76}
+.scores-large{margin-top:18px}
+.detail-copy{font-size:20px;line-height:1.6;max-width:850px}
+.detail-section blockquote{margin:18px 0 0;padding:18px 22px;border-left:2px solid var(--gold);font-family:"Playfair Display",serif;font-size:21px;line-height:1.55;color:#3d4039}
+.detail-actions{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px}
+.detail-actions .primary,.detail-actions .secondary{width:100%;min-height:52px}
+@media(max-width:700px){
+ .detail-page{padding-top:30px}
+ .detail-title-row{align-items:flex-start;gap:12px}
+ .detail-title-row h1{font-size:43px}
+ .detail-match{min-width:78px;padding:13px 8px;font-size:24px}
+ .detail-page .detail-image-wrap,.detail-page>.detail-image{max-height:320px;margin-left:-18px;width:calc(100% + 36px);margin-bottom:20px}
+ .detail-highlight{border-left:0;border-top:3px solid var(--gold)}
+ .detail-copy{font-size:17px}
+ .detail-section blockquote{font-size:18px}
+ .detail-actions{grid-template-columns:1fr}
+ .top .secondary{white-space:nowrap}
+}
