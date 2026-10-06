@@ -50,14 +50,18 @@ const CAMPOS = "*";
  *
  * La selección País → Ciudad → Zona es un filtro de pertenencia, no una
  * sugerencia. Nunca se mezclan filas con geografía desconocida o de otra zona.
- * "Usar mi ubicación" solo cambia el último nivel: país + ciudad siguen siendo
- * obligatorios y las coordenadas acotan el resultado.
+ * "Usar mi ubicación" es un modo independiente: las coordenadas acotan el
+ * resultado y no exige seleccionar país, ciudad ni zona previamente.
  */
 export async function buscarRestaurantes(c: Contexto): Promise<Restaurante[]> {
   let q = supabase.from("restaurantes").select(CAMPOS).limit(60);
 
-  if (c.paisId) q = q.eq("pais_id", c.paisId);
-  if (c.ciudadId) q = q.eq("ciudad_id", c.ciudadId);
+  // En modo ubicación, las coordenadas son la fuente geográfica principal.
+  // No arrastramos filtros de país/ciudad de una selección anterior.
+  if (!c.usarUbicacion) {
+    if (c.paisId) q = q.eq("pais_id", c.paisId);
+    if (c.ciudadId) q = q.eq("ciudad_id", c.ciudadId);
+  }
 
   if (c.usarUbicacion && c.lat != null && c.lng != null) {
     const dLat = 0.18;
@@ -77,9 +81,11 @@ export async function buscarRestaurantes(c: Contexto): Promise<Restaurante[]> {
   // Defensa adicional: aunque Supabase ya filtró, no dejamos pasar datos
   // inconsistentes si una fuente externa llegara a devolverlos.
   return ((data ?? []) as unknown as Restaurante[]).filter((r) => {
-    if (c.paisId && r.pais_id !== c.paisId) return false;
-    if (c.ciudadId && r.ciudad_id !== c.ciudadId) return false;
-    if (!c.usarUbicacion && c.zonaId && r.zona_id !== c.zonaId) return false;
+    if (!c.usarUbicacion) {
+      if (c.paisId && r.pais_id !== c.paisId) return false;
+      if (c.ciudadId && r.ciudad_id !== c.ciudadId) return false;
+      if (c.zonaId && r.zona_id !== c.zonaId) return false;
+    }
     return true;
   });
 }
