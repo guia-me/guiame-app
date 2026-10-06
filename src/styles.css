@@ -232,3 +232,135 @@ footer{background:rgba(255,253,248,.28)}
   .bottom-actions{grid-template-columns:1fr;gap:8px}
 }
 \n/* GUÍA·ME — ubicación automática como primera experiencia */\n.geo-country-hero{position:relative;height:300px;margin:0 0 34px;overflow:hidden;border:1px solid var(--line);background:#ddd6c8;box-shadow:0 20px 55px rgba(66,53,30,.11)}\n.geo-country-hero img{width:100%;height:100%;display:block;object-fit:cover;filter:saturate(.84) contrast(.98)}\n.geo-country-hero:after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(15,16,12,.62),rgba(15,16,12,.06) 68%,rgba(15,16,12,.2))}\n.geo-country-overlay{position:absolute;z-index:1;left:30px;bottom:25px;color:#fff;display:flex;flex-direction:column;align-items:flex-start;text-shadow:0 2px 14px rgba(0,0,0,.28)}\n.geo-country-overlay span{font-size:9px;letter-spacing:.24em;font-weight:700;opacity:.9}.geo-country-overlay strong{font-family:"Playfair Display",serif;font-size:46px;font-weight:500;line-height:1.05}.geo-country-overlay small{font-size:13px;margin-top:7px;opacity:.9}.geo-country-placeholder{height:100%;display:flex;align-items:center;justify-content:center;font-size:10px;letter-spacing:.22em;color:#837a6a}\n.location-summary{display:flex;align-items:center;justify-content:space-between;gap:16px;border:1px solid var(--line);background:#f8f4eb;padding:14px 16px;margin-bottom:18px}.location-summary>div{display:flex;align-items:center;gap:10px}.location-summary span{font-size:18px}.location-summary strong{display:block;font-size:13px;color:var(--ink)}.location-summary small{display:block;color:var(--muted);font-size:11px;margin-top:2px}.change-location{border:0;background:none;color:var(--olive);font-size:9px;font-weight:700;letter-spacing:.13em;cursor:pointer;white-space:nowrap}.location-picker{padding:4px 0 8px;border-top:1px solid var(--line);margin-bottom:18px}.picker-title{font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:#777166;margin:16px 0 10px}.country-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:4px}.country-card{position:relative;height:120px;padding:0;border:1px solid var(--line);background:var(--paper);overflow:hidden;cursor:pointer;text-align:left}.country-card img{width:100%;height:100%;display:block;object-fit:cover;filter:saturate(.82)}.country-card:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.02),rgba(0,0,0,.62))}.country-card span{position:absolute;z-index:1;left:13px;bottom:11px;color:#fff;font-family:"Playfair Display",serif;font-size:22px}.country-card.active{border:2px solid var(--ink);box-shadow:0 10px 24px rgba(66,53,30,.14)}\n@media(max-width:700px){.geo-country-hero{height:205px;margin-bottom:27px}.geo-country-overlay{left:18px;bottom:17px}.geo-country-overlay strong{font-size:34px}.location-summary{align-items:flex-start;flex-direction:column}.change-location{padding:0}.country-cards{gap:7px}.country-card{height:95px}.country-card span{left:9px;bottom:8px;font-size:17px}}\n
+
+/* GUÍA·ME — Visual Master: referencia original */
+:root{
+  --ink:#12191b;
+  --ink-soft:#1d292b;
+  --gold:#c5a45f;
+  --gold-soft:#d7c28b;
+  --cream:#f5f1e8;
+  --paper:#fffdf8;
+  --olive:#68725b;
+  --line:#d8d0c1;
+  --muted:#6e6a61;
+}
+body{
+  background:#f5f1e8;
+  color:#172022;
+}
+.top{
+  background:#11191b;
+  color:#f8f4ea;
+  border-bottom:1px solid rgba(197,164,95,.28);
+  box-shadow:0 8px 28px rgba(0,0,0,.12);
+}
+.brand{color:#f8f4ea;font-family:"Playfair Display",serif;font-weight:500;letter-spacing:.13em}
+.brand span{color:var(--gold)}
+.tag{color:#cfc8b8}
+.top .secondary{color:#f8f4ea;border-color:rgba(197,164,95,.5);background:transparent}
+.top .secondary:hover{background:rgba(197,164,95,.12)}
+.hero,.results{max-width:1160px}
+.hero{padding-top:46px}
+.geo-country-hero{
+  height:360px;
+  margin:0 0 34px;
+  border:0;
+  box-shadow:0 24px 70px rgba(20,22,19,.18);
+}
+.geo-country-hero:after{
+  background:linear-gradient(90deg,rgba(9,16,18,.78),rgba(9,16,18,.16) 66%,rgba(9,16,18,.35));
+}
+.geo-country-overlay{left:36px;bottom:31px}
+.geo-country-overlay span{letter-spacing:.3em;color:#ddd4c0}
+.geo-country-overlay strong{font-size:52px}
+.intro h1,.results h1{
+  color:#172022;
+  font-size:clamp(54px,7.5vw,88px);
+}
+.intro h1 em,.results h1 em{color:#59634f}
+.lead{color:#66635b}
+.card{
+  background:#121a1c;
+  color:#f7f2e8;
+  border:1px solid rgba(197,164,95,.22);
+  box-shadow:0 30px 80px rgba(15,20,20,.18);
+  padding:38px;
+}
+.card:before{color:#9d906f}
+.card h2{color:#f7f2e8}
+.card label{color:#bcb4a4}
+.location-summary{
+  background:#1b2729;
+  border-color:#2f3b3d;
+  color:#f7f2e8;
+}
+.location-summary strong{color:#f7f2e8}
+.location-summary small{color:#a9a59b}
+.change-location{color:#d2b66f}
+.search-mode{border-color:#394547}
+.search-mode .chip{color:#d9d3c5}
+.search-mode .chip.active{background:#c5a45f;color:#12191b}
+.card .chip{
+  background:#1b2729;
+  color:#d8d2c5;
+  border-color:#394547;
+}
+.card .chip.active{background:#68725b;color:#fff;border-color:#68725b}
+.card select,.card input,.card textarea{
+  background:#1b2729;
+  color:#f7f2e8;
+  border-color:#394547;
+}
+.card .primary{
+  background:#c5a45f;
+  color:#11191b;
+  border-color:#c5a45f;
+  box-shadow:0 12px 28px rgba(0,0,0,.25);
+}
+.card .primary:hover{background:#d5bb7c;border-color:#d5bb7c}
+.card .secondary{
+  color:#eee7d9;
+  border-color:#68706a;
+}
+.card .secondary:hover{background:#1b2729}
+.location-note{color:#aaa69c}
+.location-picker{border-top-color:#394547}
+.picker-title{color:#bcb4a4}
+.country-card{background:#1b2729;border-color:#394547}
+.country-card.active{border-color:#c5a45f}
+.bottom-actions .location-box .secondary{background:#1b2729}
+.reference-badge{background:rgba(18,25,27,.86);color:#e7d9b6}
+.results{padding-top:54px}
+.results .match{
+  background:#e8dfc9;
+  color:#675126;
+  border:1px solid #c8b37f;
+}
+.cards{margin-top:38px}
+.restaurant{
+  background:#fffdf8;
+  border-color:#d6cdbd;
+}
+.restaurant .match{
+  background:#1b2729;
+  color:#d9bc76;
+  border-color:#1b2729;
+}
+.restaurant h2{color:#1a2020}
+.scores b{color:#65715a}
+.detail-section{
+  background:#fffdf8;
+}
+.detail-section .match{background:#1b2729;color:#d9bc76}
+.detail-image{box-shadow:0 20px 60px rgba(20,22,19,.16)}
+.score-control{background:#f7f3ea}
+.score-control input{accent-color:#68725b}
+.nav-button:hover{background:#1b2729;border-color:#1b2729}
+footer{background:#11191b;color:#aaa79d;border-top-color:#2c3637}
+@media(max-width:700px){
+  .hero{padding-top:28px}
+  .geo-country-hero{height:225px}
+  .geo-country-overlay strong{font-size:37px}
+  .card{padding:20px}
+}
