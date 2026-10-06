@@ -170,7 +170,10 @@ export default function App() {
         {error&&<div className="error">{error}</div>}
         {loading?<div className="loading">Cargando lugares…</div>:<>
           {(ctx.zonaId||ctx.usarUbicacion)&&<Filters ctx={ctx} set={set}/>}
-          <div className="bottom-actions">\n            <button className="primary" disabled={(!ctx.zonaId && !(ctx.usarUbicacion&&ctx.lat!=null&&ctx.lng!=null))||searching} onClick={buscar}>{searching?"CALCULANDO MATCH…":"ENCONTRAR MI MATCH →"}</button>\n          </div>\n          <button className="secondary" onClick={()=>setScreen("inscribe")}>＋ INSCRIBIR RESTAURANTE</button>
+          <div className="bottom-actions">
+            <button className="primary" disabled={(!ctx.zonaId && !(ctx.usarUbicacion&&ctx.lat!=null&&ctx.lng!=null))||searching} onClick={buscar}>{searching?"CALCULANDO MATCH…":"ENCONTRAR MI MATCH →"}</button>
+          </div>
+          <button className="secondary" onClick={()=>setScreen("inscribe")}>＋ INSCRIBIR RESTAURANTE</button>
         </>}
       </section>
     </main>
