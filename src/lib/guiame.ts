@@ -280,7 +280,7 @@ export function calcularMatch(r: Restaurante, c: Contexto): ResultadoMatch {
   if (c.cocinas.length === 0) {
     pCocina = PESOS_MATCH.cocina * 0.5;
   } else {
-    const normalizar = (x: string) => x.normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").trim().toLowerCase();
+    const normalizar = (x: string) => x.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
     const equivalentes: Record<string, string[]> = {
       bbq: ["bbq", "barbecue", "barbacoa", "parrilla", "grill"],
       parrilla: ["parrilla", "bbq", "barbecue", "barbacoa", "grill"],
@@ -310,7 +310,7 @@ export function calcularMatch(r: Restaurante, c: Contexto): ResultadoMatch {
   if (!c.antojos || c.antojos.length === 0) {
     pAntojo = PESOS_MATCH.antojo * 0.5;
   } else {
-    const normalizarAntojo = (x: string) => x.normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").trim().toLowerCase();
+    const normalizarAntojo = (x: string) => x.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
     const aliases: Record<string, string[]> = {
       hamburguesas: ["hamburguesa", "hamburguesas", "burger", "burgers"],
       tacos: ["taco", "tacos"], pizza: ["pizza"], sushi: ["sushi"],
