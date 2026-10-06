@@ -136,10 +136,11 @@ export function Zagat({ r }: { r: Restaurante }) {
     </div>
   );
   return (
-    <div className="flex gap-4">
+    <div className="grid grid-cols-4 gap-3">
       {item("Food", r.food_avg)}
       {item("Decor", r.decor_avg)}
       {item("Service", r.service_avg)}
+      {item("Cost", r.cost_avg ?? null)}
     </div>
   );
 }
