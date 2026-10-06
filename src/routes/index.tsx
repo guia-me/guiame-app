@@ -50,6 +50,8 @@ function Inicio() {
   const [ciudades, setCiudades] = useState<Ciudad[]>([]);
   const [zonas, setZonas] = useState<Zona[]>([]);
   const [geoError, setGeoError] = useState<string | null>(null);
+  const [modoBusqueda, setModoBusqueda] = useState<"zona" | "ubicacion" | null>(null);
+  const [obteniendoUbicacion, setObteniendoUbicacion] = useState(false);
 
   // Cargamos toda la geografía una sola vez. Después, cambiar País/Ciudad
   // es sólo estado local: ningún click vuelve a disparar una consulta.
@@ -104,26 +106,46 @@ function Inicio() {
     lista.includes(valor) ? lista.filter((x) => x !== valor) : [...lista, valor];
 
   const pedirUbicacion = () => {
-    if (!("geolocation" in navigator)) return;
+    setModoBusqueda("ubicacion");
+    setGeoError(null);
+    if (!("geolocation" in navigator)) {
+      setGeoError("Tu navegador no permite obtener la ubicación.");
+      return;
+    }
+    setObteniendoUbicacion(true);
     navigator.geolocation.getCurrentPosition(
-      (pos) =>
+      (pos) => {
+        setObteniendoUbicacion(false);
         set({
           usarUbicacion: true,
           lat: pos.coords.latitude,
           lng: pos.coords.longitude,
+          paisId: null,
+          paisNombre: undefined,
+          ciudadId: null,
+          ciudadNombre: undefined,
           zonaId: null,
           zonaNombre: undefined,
-        }),
-      () => set({ usarUbicacion: false, lat: null, lng: null }),
-      {
-        enableHighAccuracy: false,
-        timeout: 10000,
-        maximumAge: 300000,
+        });
       },
+      () => {
+        setObteniendoUbicacion(false);
+        set({ usarUbicacion: false, lat: null, lng: null });
+        setGeoError("No pudimos obtener tu ubicación. Puedes elegir una zona manualmente.");
+      },
+      { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 },
     );
   };
 
-  const puede = !!c.paisId && !!c.ciudadId && (!!c.zonaId || c.usarUbicacion);
+  const elegirZona = () => {
+    setModoBusqueda("zona");
+    setGeoError(null);
+    set({ usarUbicacion: false, lat: null, lng: null });
+  };
+
+  const puede = modoBusqueda === "ubicacion"
+    ? c.usarUbicacion && c.lat !== null && c.lng !== null
+    : !!c.paisId && !!c.ciudadId && !!c.zonaId;
 
   const buscar = () => {
     guardarContexto(c);
@@ -138,7 +160,21 @@ function Inicio() {
       subtitulo="Tú pruebas. Tú evalúas. GUÍA·ME aprende."
     >
       {geoError && <div className="mt-4 border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700">{geoError}</div>}
+
+      <div className="grid gap-3 py-6">
+        <button type="button" onClick={elegirZona} className={"w-full rounded-xl border px-5 py-4 text-left transition " + (modoBusqueda === "zona" ? "border-primary bg-primary/5" : "border-border bg-background")}>
+          <div className="font-semibold">Elegir una zona</div>
+          <div className="mt-1 text-sm text-muted-foreground">País → Ciudad → Zona</div>
+        </button>
+        <button type="button" onClick={pedirUbicacion} disabled={obteniendoUbicacion} className={"w-full rounded-xl border px-5 py-4 text-left transition " + (modoBusqueda === "ubicacion" ? "border-primary bg-primary/5" : "border-border bg-background") + " disabled:opacity-60"}>
+          <div className="flex items-center gap-2 font-semibold"><MapPin size={18} /> {obteniendoUbicacion ? "Obteniendo tu ubicación…" : "Usar mi ubicación"}</div>
+          <div className="mt-1 text-sm text-muted-foreground">Encuentra opciones cerca de donde estás</div>
+        </button>
+      </div>
+
       <div className="divide-y divide-border">
+        {modoBusqueda === "zona" && (
+          <>
         <Campo label="País">
           {paises.map((p) => (
             <Chip
@@ -181,7 +217,7 @@ function Inicio() {
           </Campo>
         )}
 
-        {c.ciudadId && (
+        {c.ciudadId && modoBusqueda === "zona" && (
           <Campo label="Zona">
             {zonasVisibles.map((z) => (
               <Chip
@@ -192,10 +228,9 @@ function Inicio() {
                 {z.nombre}
               </Chip>
             ))}
-            <Chip activo={c.usarUbicacion} onClick={pedirUbicacion}>
-              <MapPin size={14} className="mr-1.5" /> Usar mi ubicación
-            </Chip>
           </Campo>
+        )}
+        </>
         )}
 
         <Campo label="Con quién">
@@ -256,7 +291,9 @@ function Inicio() {
           Encontrar mi lugar
         </button>
         <p className="mt-3 text-center text-xs text-muted-foreground">
-          Elige país, ciudad y zona (o tu ubicación) para empezar.
+          {modoBusqueda === "ubicacion"
+            ? "Usaremos tu ubicación actual para encontrar tus mejores opciones."
+            : "Elige una zona o usa tu ubicación para empezar."}
         </p>
       </div>
     </Shell>
