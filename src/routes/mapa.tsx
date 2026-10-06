@@ -27,7 +27,8 @@ function Mapa() {
   useEffect(() => setC(leerContexto()), []);
   const { data } = useQuery(mapaQuery(c?.ciudadId ?? null));
 
-  const conCoords = (data ?? []).filter((r) => r.lat != null && r.lng != null);
+  const lugares = c?.zonaId ? (data ?? []).filter((r) => r.zona_id === c.zonaId) : (data ?? []);
+  const conCoords = lugares.filter((r) => r.lat != null && r.lng != null);
   const centro: [number, number] =
     c?.usarUbicacion && c.lat != null && c.lng != null
       ? [c.lat, c.lng]
@@ -38,6 +39,10 @@ function Mapa() {
   return (
     <Shell titulo="Mapa" subtitulo={c?.ciudadNombre ?? "Selecciona tu ciudad en el inicio."}>
       <div className="py-6">
+        <div className="mb-4 flex items-center justify-between gap-4 text-xs text-muted-foreground">
+          <span>{c?.zonaNombre ? `Zona: ${c.zonaNombre}` : "Restaurantes con ubicación"}</span>
+          <span>{conCoords.length} {conCoords.length === 1 ? "lugar" : "lugares"}</span>
+        </div>
         {conCoords.length === 0 ? (
           <Vacio>Todavía no hay lugares con ubicación para mostrar.</Vacio>
         ) : (
