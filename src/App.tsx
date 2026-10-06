@@ -127,9 +127,9 @@ export default function App() {
       const cocinaCoincide = (r:Restaurante) => ctx.cocinas.length === 0 || r.cocina.some(x => ctx.cocinas.some(c => normalize(x) === normalize(c)));
       const antojoCoincide = (r:Restaurante) => ctx.antojos.length === 0 || ctx.antojos.some(a => { const b=normalize(a); return (r.especialidades??[]).concat(r.platos_recomendados??"").some(x=>normalize(x).includes(b)); });
       const cocinaCandidates = ctx.cocinas.length ? rs.filter(cocinaCoincide) : rs;
-      const filtered = cocinaCandidates.length ? cocinaCandidates : rs;
+      const filtered = cocinaCandidates;
       const antojoCandidates = ctx.antojos.length ? filtered.filter(antojoCoincide) : filtered;
-      const candidates = antojoCandidates.length ? antojoCandidates : filtered;
+      const candidates = antojoCandidates;
       const ranked=candidates.map(r=>({r,m:calcularMatch(r,ctx).match,dist:(ctx.usarUbicacion&&ctx.lat!=null&&ctx.lng!=null&&r.lat!=null&&r.lng!=null)?distanciaKm(ctx.lat,ctx.lng,r.lat,r.lng):null}))
         .sort((a,b)=>b.m-a.m || ((a.dist??Infinity)-(b.dist??Infinity))).map(x=>x.r);
       guardarContexto(ctx);setResults(ranked);setScreen("results");
