@@ -706,3 +706,9 @@ body{background:var(--gm-cream);color:var(--gm-ink)}
   .gm-home-hero{height:320px}
   .gm-home-copy h1{font-size:39px}
 }
+
+.gm-header-home{position:absolute;left:0;right:0;top:0;background:linear-gradient(180deg,rgba(8,14,16,.72),transparent);border-bottom:0;box-shadow:none}
+.gm-home-shell .gm-main{max-width:430px}
+.gm-home-shell{background:var(--gm-cream)}
+.gm-error{padding:9px 11px;margin:0 0 9px;border-radius:8px;background:#f7e8e4;color:#8a3b2d;font-size:10px}
+.gm-home-panel .gm-filter-section:first-of-type{padding-top:12px}
