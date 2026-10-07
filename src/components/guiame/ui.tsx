@@ -26,6 +26,7 @@ export function Shell({
   children,
   titulo,
   subtitulo,
+  home,
 }: {
   children: ReactNode;
   titulo?: string;
