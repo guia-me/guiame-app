@@ -1,35 +1,22 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { MapPin, Navigation } from "lucide-react";
+import { Chip, Campo, Shell } from "@/components/guiame/ui";
 import { supabase } from "@/integrations/supabase/client";
-import { MapPin } from "lucide-react";
-import { Campo, Chip, Shell } from "@/components/guiame/ui";
 import {
-  AMBIENTES,
-  COCINAS,
-  CON_QUIEN,
-  PERSONAS,
-  PRESUPUESTOS,
-  contextoVacio,
-  guardarContexto,
-  leerContexto,
-  type Contexto,
+  AMBIENTES, COCINAS, CON_QUIEN, PERSONAS, PRESUPUESTOS,
+  contextoVacio, guardarContexto, leerContexto, type Contexto,
 } from "@/lib/guiame";
 import type { Pais, Ciudad, Zona } from "@/lib/queries";
 
+const PANAMA_HERO = "https://images.unsplash.com/photo-1587759301533-ae42d7065a80?auto=format&fit=crop&w=1400&q=86";
+
 export const Route = createFileRoute("/")({
+  ssr: false,
   head: () => ({
     meta: [
-      { title: "GUÍA·ME — Tu guía para comer, construida por quienes comen" },
-      {
-        name: "description",
-        content:
-          "Cuéntanos con quién sales, tu presupuesto y tu zona: GUÍA·ME te da los 3 lugares que mejor encajan contigo.",
-      },
-      { property: "og:title", content: "GUÍA·ME — Guía gastronómica personalizada" },
-      {
-        property: "og:description",
-        content: "Tú pruebas. Tú evalúas. GUÍA·ME aprende.",
-      },
+      { title: "GUÍA·ME — Tu guía de restaurantes" },
+      { name: "description", content: "Dinos qué buscas y encuentra los restaurantes que mejor encajan contigo." },
     ],
   }),
   component: Inicio,
@@ -39,115 +26,80 @@ function Inicio() {
   const navigate = useNavigate();
   const [c, setC] = useState<Contexto>(contextoVacio);
   const [listo, setListo] = useState(false);
-
-  useEffect(() => {
-    const guardado = leerContexto();
-    if (guardado) {
-      setC(guardado);
-      setModoBusqueda(guardado.usarUbicacion ? "ubicacion" : guardado.zonaId ? "zona" : null);
-    }
-    setListo(true);
-  }, []);
-
   const [paises, setPaises] = useState<Pais[]>([]);
   const [ciudades, setCiudades] = useState<Ciudad[]>([]);
   const [zonas, setZonas] = useState<Zona[]>([]);
+  const [modo, setModo] = useState<"zona" | "ubicacion" | null>(null);
   const [geoError, setGeoError] = useState<string | null>(null);
-  const [modoBusqueda, setModoBusqueda] = useState<"zona" | "ubicacion" | null>(null);
-  const [obteniendoUbicacion, setObteniendoUbicacion] = useState(false);
+  const [geoLoading, setGeoLoading] = useState(false);
+  const [mostrarUbicacion, setMostrarUbicacion] = useState(false);
 
-  // Cargamos toda la geografía una sola vez. Después, cambiar País/Ciudad
-  // es sólo estado local: ningún click vuelve a disparar una consulta.
   useEffect(() => {
-    let activo = true;
-
-    const cargarGeografia = async () => {
-      try {
-        const [paisesResult, ciudadesResult, zonasResult] = await Promise.all([
-          supabase.from("paises").select("id, nombre, codigo_iso2").order("nombre"),
-          supabase.from("ciudades").select("id, nombre, pais_id").order("nombre"),
-          supabase.from("zonas").select("id, nombre, ciudad_id").order("nombre"),
-        ]);
-
-        if (!activo) return;
-
-        const error = paisesResult.error || ciudadesResult.error || zonasResult.error;
-        if (error) {
-          setGeoError(`No se pudo cargar la geografía: ${error.message}`);
-          return;
-        }
-
-        setPaises((paisesResult.data ?? []) as Pais[]);
-        setCiudades((ciudadesResult.data ?? []) as Ciudad[]);
-        setZonas((zonasResult.data ?? []) as Zona[]);
-      } catch (error) {
-        if (activo) {
-          setGeoError(
-            `No se pudo cargar la geografía: ${error instanceof Error ? error.message : "error de conexión"}`,
-          );
-        }
+    const saved = leerContexto();
+    if (saved) {
+      setC(saved);
+      setModo(saved.usarUbicacion ? "ubicacion" : saved.zonaId ? "zona" : null);
+    }
+    Promise.all([
+      supabase.from("paises").select("id,nombre,codigo_iso2").order("nombre"),
+      supabase.from("ciudades").select("id,nombre,pais_id").order("nombre"),
+      supabase.from("zonas").select("id,nombre,ciudad_id").order("nombre"),
+    ]).then(([p, ci, z]) => {
+      if (!p.error && !ci.error && !z.error) {
+        setPaises((p.data ?? []) as Pais[]);
+        setCiudades((ci.data ?? []) as Ciudad[]);
+        setZonas((z.data ?? []) as Zona[]);
+      } else {
+        setGeoError("No pudimos cargar las opciones de ubicación.");
       }
-    };
-
-    void cargarGeografia();
-    return () => {
-      activo = false;
-    };
+      setListo(true);
+    }).catch(() => {
+      setGeoError("No pudimos conectar con GUÍA·ME.");
+      setListo(true);
+    });
   }, []);
 
-  const ciudadesVisibles = c.paisId
-    ? ciudades.filter((ci) => ci.pais_id === c.paisId)
-    : [];
+  const set = (patch: Partial<Contexto>) => setC(prev => ({ ...prev, ...patch }));
+  const ciudadesVisibles = c.paisId ? ciudades.filter(x => x.pais_id === c.paisId) : [];
+  const zonasVisibles = c.ciudadId ? zonas.filter(x => x.ciudad_id === c.ciudadId) : [];
 
-  const zonasVisibles = c.ciudadId
-    ? zonas.filter((z) => z.ciudad_id === c.ciudadId)
-    : [];
-
-  const set = (parcial: Partial<Contexto>) => setC((prev) => ({ ...prev, ...parcial }));
-
-  const alternar = (lista: string[], valor: string) =>
-    lista.includes(valor) ? lista.filter((x) => x !== valor) : [...lista, valor];
-
-  const pedirUbicacion = () => {
-    setModoBusqueda("ubicacion");
+  const usarUbicacion = () => {
+    setModo("ubicacion");
     setGeoError(null);
-    if (!("geolocation" in navigator)) {
-      setGeoError("Tu navegador no permite obtener la ubicación.");
+    if (!navigator.geolocation) {
+      setGeoError("Tu navegador no permite usar la ubicación.");
       return;
     }
-    setObteniendoUbicacion(true);
+    setGeoLoading(true);
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setObteniendoUbicacion(false);
-        set({
-          usarUbicacion: true,
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude,
-          paisId: null,
-          paisNombre: undefined,
-          ciudadId: null,
-          ciudadNombre: undefined,
-          zonaId: null,
-          zonaNombre: undefined,
-        });
+      pos => {
+        setGeoLoading(false);
+        const patch: Partial<Contexto> = {
+          usarUbicacion: true, lat: pos.coords.latitude, lng: pos.coords.longitude,
+          paisId: null, ciudadId: null, zonaId: null,
+          paisNombre: undefined, ciudadNombre: undefined, zonaNombre: undefined,
+        };
+        set(patch);
+        guardarContexto({ ...c, ...patch });
       },
       () => {
-        setObteniendoUbicacion(false);
+        setGeoLoading(false);
         set({ usarUbicacion: false, lat: null, lng: null });
-        setGeoError("No pudimos obtener tu ubicación. Puedes elegir una zona manualmente.");
+        setGeoError("No pudimos obtener tu ubicación. Puedes elegir una zona.");
+        setModo("zona");
       },
       { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 },
     );
   };
 
   const elegirZona = () => {
-    setModoBusqueda("zona");
-    setGeoError(null);
+    setModo("zona");
+    setMostrarUbicacion(true);
     set({ usarUbicacion: false, lat: null, lng: null });
   };
 
-  const puede = modoBusqueda === "ubicacion"
-    ? c.usarUbicacion && c.lat !== null && c.lng !== null
+  const puede = modo === "ubicacion"
+    ? c.usarUbicacion && c.lat != null && c.lng != null
     : !!c.paisId && !!c.ciudadId && !!c.zonaId;
 
   const buscar = () => {
@@ -155,150 +107,114 @@ function Inicio() {
     navigate({ to: "/matches" });
   };
 
-  if (!listo) return <Shell>{null}</Shell>;
+  if (!listo) {
+    return (
+      <div className="gm-processing">
+        <div className="gm-processing-logo"><span className="gm-logo">GUÍA<span>·</span>ME<small>TU GUÍA DE RESTAURANTES</small></span></div>
+        <p>Cargando tu guía gastronómica…</p>
+      </div>
+    );
+  }
 
   return (
-    <Shell
-      titulo="¿Dónde deberías comer hoy?"
-      subtitulo="Tú pruebas. Tú evalúas. GUÍA·ME aprende."
-    >
-      {geoError && <div className="mt-4 border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700">{geoError}</div>}
+    <Shell home>
+      <section className="gm-home-hero">
+        <img src={PANAMA_HERO} alt="" />
+        <div className="gm-home-copy">
+          <div className="gm-kicker">TU GUÍA GASTRONÓMICA PERSONAL</div>
+          <h1>Buena comida,<br />mejores momentos.</h1>
+          <p>Cuéntanos qué buscas y te recomendamos los lugares que mejor encajan contigo.</p>
+        </div>
+      </section>
 
-      <div className="grid gap-3 py-6">
-        <button type="button" onClick={elegirZona} className={"w-full rounded-xl border px-5 py-4 text-left transition " + (modoBusqueda === "zona" ? "border-primary bg-primary/5" : "border-border bg-background")}>
-          <div className="font-semibold">Elegir una zona</div>
-          <div className="mt-1 text-sm text-muted-foreground">País → Ciudad → Zona</div>
-        </button>
-        <button type="button" onClick={pedirUbicacion} disabled={obteniendoUbicacion} className={"w-full rounded-xl border px-5 py-4 text-left transition " + (modoBusqueda === "ubicacion" ? "border-primary bg-primary/5" : "border-border bg-background") + " disabled:opacity-60"}>
-          <div className="flex items-center gap-2 font-semibold"><MapPin size={18} /> {obteniendoUbicacion ? "Obteniendo tu ubicación…" : "Usar mi ubicación"}</div>
-          <div className="mt-1 text-sm text-muted-foreground">Encuentra opciones cerca de donde estás</div>
-        </button>
-      </div>
+      <section className="gm-home-panel">
+        {geoError && <div className="gm-error">{geoError}</div>}
 
-      <div className="divide-y divide-border">
-        {modoBusqueda === "zona" && (
-          <>
-        <Campo label="País">
-          {paises.map((p) => (
-            <Chip
-              key={p.id}
-              activo={c.paisId === p.id}
-              onClick={() =>
-                set({
-                  paisId: p.id,
-                  paisNombre: p.nombre,
-                  ciudadId: null,
-                  ciudadNombre: undefined,
-                  zonaId: null,
-                  zonaNombre: undefined,
-                })
-              }
-            >
-              {p.nombre}
-            </Chip>
-          ))}
-        </Campo>
+        <div className="gm-location-card">
+          <div>
+            <strong>
+              {c.zonaNombre || (c.usarUbicacion ? "Tu ubicación actual" : "¿Dónde quieres comer?")}
+            </strong>
+            <small>
+              {c.usarUbicacion ? "Buscando cerca de ti" : c.ciudadNombre ? c.ciudadNombre : "Selecciona una zona"}
+            </small>
+          </div>
+          <button type="button" onClick={() => setMostrarUbicacion(v => !v)}>
+            {mostrarUbicacion ? "CERRAR" : "CAMBIAR"}
+          </button>
+        </div>
 
-        {c.paisId && (
-          <Campo label="Ciudad">
-            {ciudadesVisibles.map((ci) => (
-              <Chip
-                key={ci.id}
-                activo={c.ciudadId === ci.id}
-                onClick={() =>
-                  set({
-                    ciudadId: ci.id,
-                    ciudadNombre: ci.nombre,
-                    zonaId: null,
-                    zonaNombre: undefined,
-                  })
-                }
-              >
-                {ci.nombre}
-              </Chip>
-            ))}
-          </Campo>
+        <div className="gm-mode-grid">
+          <button type="button" className={modo === "zona" ? "gm-mode-btn active" : "gm-mode-btn"} onClick={elegirZona}>
+            ZONA
+          </button>
+          <button type="button" className={modo === "ubicacion" ? "gm-mode-btn active" : "gm-mode-btn"} onClick={usarUbicacion}>
+            <Navigation size={12} style={{verticalAlign:"-2px",marginRight:4}} />
+            MI UBICACIÓN
+          </button>
+        </div>
+
+        {(mostrarUbicacion || modo === "zona") && (
+          <div>
+            <Campo label="País">
+              {paises.map(p => (
+                <Chip key={p.id} activo={!c.usarUbicacion && c.paisId === p.id} onClick={() => {
+                  set({paisId:p.id,paisNombre:p.nombre,ciudadId:null,ciudadNombre:undefined,zonaId:null,zonaNombre:undefined,usarUbicacion:false,lat:null,lng:null});
+                  setModo("zona");
+                }}>{p.nombre}</Chip>
+              ))}
+            </Campo>
+
+            {c.paisId && (
+              <Campo label="Ciudad">
+                {ciudadesVisibles.map(x => (
+                  <Chip key={x.id} activo={c.ciudadId === x.id} onClick={() => set({ciudadId:x.id,ciudadNombre:x.nombre,zonaId:null,zonaNombre:undefined})}>
+                    {x.nombre}
+                  </Chip>
+                ))}
+              </Campo>
+            )}
+
+            {c.ciudadId && (
+              <Campo label="Zona">
+                {zonasVisibles.map(x => (
+                  <Chip key={x.id} activo={c.zonaId === x.id} onClick={() => set({zonaId:x.id,zonaNombre:x.nombre})}>
+                    {x.nombre}
+                  </Chip>
+                ))}
+              </Campo>
+            )}
+          </div>
         )}
 
-        {c.ciudadId && modoBusqueda === "zona" && (
-          <Campo label="Zona">
-            {zonasVisibles.map((z) => (
-              <Chip
-                key={z.id}
-                activo={c.zonaId === z.id}
-                onClick={() => set({ zonaId: z.id, zonaNombre: z.nombre })}
-              >
-                {z.nombre}
-              </Chip>
-            ))}
-          </Campo>
-        )}
-        </>
-        )}
+        <div className="gm-filter-section">
+          <p className="gm-label">Con quién</p>
+          <div className="gm-chips">{CON_QUIEN.map(x => <Chip key={x} activo={c.conQuien===x} onClick={() => set({conQuien:x})}>{x}</Chip>)}</div>
+        </div>
+        <div className="gm-filter-section">
+          <p className="gm-label">Personas</p>
+          <div className="gm-chips">{PERSONAS.map(x => <Chip key={x} activo={c.personas===x} onClick={() => set({personas:x})}>{x}</Chip>)}</div>
+        </div>
+        <div className="gm-filter-section">
+          <p className="gm-label">Presupuesto por persona</p>
+          <div className="gm-chips">{PRESUPUESTOS.map(x => <Chip key={x.label} activo={c.presupuesto===x.label} onClick={() => set({presupuesto:x.label})}>{x.label}</Chip>)}</div>
+        </div>
+        <div className="gm-filter-section">
+          <p className="gm-label">Tipo de cocina</p>
+          <div className="gm-chips">{COCINAS.map(x => <Chip key={x} activo={c.cocinas.includes(x)} onClick={() => set({cocinas:c.cocinas.includes(x)?c.cocinas.filter(v=>v!==x):[...c.cocinas,x]})}>{x}</Chip>)}</div>
+        </div>
+        <div className="gm-filter-section">
+          <p className="gm-label">Ambiente</p>
+          <div className="gm-chips">{AMBIENTES.map(x => <Chip key={x} activo={c.ambientes.includes(x)} onClick={() => set({ambientes:c.ambientes.includes(x)?c.ambientes.filter(v=>v!==x):[...c.ambientes,x]})}>{x}</Chip>)}</div>
+        </div>
 
-        <Campo label="Con quién">
-          {CON_QUIEN.map((x) => (
-            <Chip key={x} activo={c.conQuien === x} onClick={() => set({ conQuien: x })}>
-              {x}
-            </Chip>
-          ))}
-        </Campo>
-
-        <Campo label="Cuántas personas">
-          {PERSONAS.map((x) => (
-            <Chip key={x} activo={c.personas === x} onClick={() => set({ personas: x })}>
-              {x}
-            </Chip>
-          ))}
-        </Campo>
-
-        <Campo label="Presupuesto por persona">
-          {PRESUPUESTOS.map((p) => (
-            <Chip
-              key={p.label}
-              activo={c.presupuesto === p.label}
-              onClick={() => set({ presupuesto: p.label })}
-            >
-              {p.label}
-            </Chip>
-          ))}
-        </Campo>
-
-        <Campo label="Tipo de cocina">
-          {COCINAS.map((x) => (
-            <Chip
-              key={x}
-              activo={c.cocinas.includes(x)}
-              onClick={() => set({ cocinas: alternar(c.cocinas, x) })}
-            >
-              {x}
-            </Chip>
-          ))}
-        </Campo>
-
-        <Campo label="Ambiente">
-          {AMBIENTES.map((x) => (
-            <Chip
-              key={x}
-              activo={c.ambientes.includes(x)}
-              onClick={() => set({ ambientes: alternar(c.ambientes, x) })}
-            >
-              {x}
-            </Chip>
-          ))}
-        </Campo>
-      </div>
-
-      <div className="py-8">
-        <button type="button" disabled={!puede} onClick={buscar} className="btn-primary w-full disabled:opacity-40">
-          Encontrar mi lugar
+        <button className="gm-primary" disabled={!puede || geoLoading} onClick={buscar}>
+          {geoLoading ? "OBTENIENDO UBICACIÓN…" : "ENCONTRAR MI MATCH  →"}
         </button>
-        <p className="mt-3 text-center text-xs text-muted-foreground">
-          {modoBusqueda === "ubicacion"
-            ? "Usaremos tu ubicación actual para encontrar tus mejores opciones."
-            : "Elige una zona o usa tu ubicación para empezar."}
+        <p style={{textAlign:"center",fontSize:9,color:"#898279",margin:"9px 0 0"}}>
+          {modo === "ubicacion" ? "Usaremos tu ubicación para encontrar opciones cercanas." : "País → Ciudad → Zona. Tu elección se guarda en este dispositivo."}
         </p>
-      </div>
+      </section>
     </Shell>
   );
 }
