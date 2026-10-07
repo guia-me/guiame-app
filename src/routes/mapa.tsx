@@ -1,24 +1,15 @@
-import { createFileRoute, ClientOnly } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { lazy, Suspense, useEffect, useState } from "react";
-import { Shell, Vacio } from "@/components/guiame/ui";
-import { leerContexto, type Contexto } from "@/lib/guiame";
+import { useEffect, useState } from "react";
+import { MapPin } from "lucide-react";
+import MapView from "@/components/guiame/MapView";
+import { imagenRestaurante, MatchBadge } from "@/components/guiame/ui";
+import { calcularMatch, leerContexto, rangoPrecio, type Contexto } from "@/lib/guiame";
 import { mapaQuery } from "@/lib/queries";
 
-const MapView = lazy(() => import("@/components/guiame/MapView"));
-
 export const Route = createFileRoute("/mapa")({
-  // This route depends on client state (localStorage/geolocation) or interactive data fetching.
-  // Keep the initial request on the SSR shell and render the route on the browser.
   ssr: false,
-  head: () => ({
-    meta: [
-      { title: "Mapa gastronómico — GUÍA·ME" },
-      { name: "description", content: "Los lugares de tu ciudad ubicados en el mapa." },
-      { property: "og:title", content: "Mapa gastronómico — GUÍA·ME" },
-      { property: "og:description", content: "Explora los restaurantes de tu ciudad en el mapa." },
-    ],
-  }),
+  head: () => ({ meta: [{ title: "Mapa — GUÍA·ME" }] }),
   component: Mapa,
 });
 
@@ -30,33 +21,41 @@ function Mapa() {
   );
 
   const lugares = data ?? [];
-  const conCoords = lugares.filter((r) => r.lat != null && r.lng != null);
-  const centro: [number, number] =
-    c?.usarUbicacion && c.lat != null && c.lng != null
-      ? [c.lat, c.lng]
-      : conCoords.length > 0
-        ? [conCoords[0]!.lat!, conCoords[0]!.lng!]
-        : [8.98, -79.52];
+  const first = lugares[0];
+  const center: [number, number] = c?.lat != null && c?.lng != null
+    ? [c.lat, c.lng]
+    : first?.lat != null && first?.lng != null
+      ? [first.lat, first.lng]
+      : [8.9824, -79.5199];
 
   return (
-    <Shell titulo="Mapa" subtitulo={c?.ciudadNombre ?? "Selecciona tu ciudad en el inicio."}>
-      <div className="py-6">
-        <div className="mb-4 flex items-center justify-between gap-4 text-xs text-muted-foreground">
-          <span>{c?.zonaNombre ? `Zona: ${c.zonaNombre}` : "Restaurantes con ubicación"}</span>
-          <span>{conCoords.length} {conCoords.length === 1 ? "lugar" : "lugares"}</span>
+    <div className="gm-app">
+      <div className="gm-map-page">
+        <div className="gm-map-overlay">
+          <div className="gm-map-search"><MapPin size={12} style={{verticalAlign:"-2px",marginRight:5}} /> {c?.zonaNombre || "Tu zona"}</div>
+          <div className="gm-map-count">{lugares.length} lugares</div>
         </div>
-        {conCoords.length === 0 ? (
-          <Vacio>Todavía no hay lugares con ubicación para mostrar.</Vacio>
-        ) : (
-          <div className="border border-border">
-            <ClientOnly fallback={<div className="h-[420px] bg-muted" />}>
-              <Suspense fallback={<div className="h-[420px] bg-muted" />}>
-                <MapView restaurantes={conCoords} centro={centro} />
-              </Suspense>
-            </ClientOnly>
-          </div>
-        )}
+
+        <div className="gm-map-frame">
+          <MapView restaurantes={lugares} centro={center} zoom={c?.usarUbicacion ? 12 : 14} alto={window.innerHeight - 140} />
+        </div>
+
+        {first ? (
+          <Link to="/restaurante/$id" params={{id:first.id}} className="gm-map-card" style={{textDecoration:"none",color:"inherit"}}>
+            <img src={imagenRestaurante(first)} alt="" />
+            <div style={{flex:1}}>
+              <div style={{display:"flex",justifyContent:"space-between",gap:8}}>
+                <div>
+                  <h3>{first.nombre}</h3>
+                  <p>{first.cocina.join(" · ")} · {rangoPrecio(first)}</p>
+                </div>
+                <MatchBadge match={c ? calcularMatch(first,c).match : 0} />
+              </div>
+            </div>
+          </Link>
+        ) : null}
       </div>
-    </Shell>
+      <div style={{height:72}} />
+    </div>
   );
 }
