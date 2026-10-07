@@ -1,216 +1,98 @@
-import { createFileRoute, ClientOnly, Link } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { lazy, Suspense, useEffect, useState } from "react";
-import { Heart } from "lucide-react";
-import { EstadoBadge, Shell, Vacio, Zagat } from "@/components/guiame/ui";
-import { alternarFavorito, leerFavoritos, rangoPrecio } from "@/lib/guiame";
+import { useEffect, useState } from "react";
+import { ArrowLeft, Heart, MapPin, Star } from "lucide-react";
+import { MatchBadge, Zagat, Vacio, imagenRestaurante } from "@/components/guiame/ui";
+import { alternarFavorito, calcularMatch, leerContexto, leerFavoritos, rangoPrecio, type Contexto } from "@/lib/guiame";
 import { aportesFichaQuery, evaluacionesQuery, restauranteQuery } from "@/lib/queries";
 
-const MapView = lazy(() => import("@/components/guiame/MapView"));
-
 export const Route = createFileRoute("/restaurante/$id")({
-  // This route depends on client state (localStorage/geolocation) or interactive data fetching.
-  // Keep the initial request on the SSR shell and render the route on the browser.
   ssr: false,
-  head: () => ({
-    meta: [
-      { title: "Ficha del restaurante — GUÍA·ME" },
-      {
-        name: "description",
-        content: "Food, Decor y Service sobre 30, precio, platos recomendados y lo que dice la comunidad.",
-      },
-      { property: "og:title", content: "Ficha del restaurante — GUÍA·ME" },
-      { property: "og:description", content: "Datos objetivos y datos de comunidad, siempre diferenciados." },
-    ],
-  }),
-  component: Detalle,
+  head: () => ({ meta: [{ title: "Ficha del restaurante — GUÍA·ME" }] }),
+  component: Restaurante,
 });
 
-function Detalle() {
+function Restaurante() {
   const { id } = Route.useParams();
-  const { data: r, isLoading } = useQuery(restauranteQuery(id));
-  const { data: evals } = useQuery(evaluacionesQuery(id));
-  const { data: aportes } = useQuery(aportesFichaQuery(id));
+  const [c, setC] = useState<Contexto | null>(null);
   const [favs, setFavs] = useState<string[]>([]);
-  useEffect(() => setFavs(leerFavoritos()), []);
+  useEffect(() => { setC(leerContexto()); setFavs(leerFavoritos()); }, []);
 
-  if (isLoading) return <Shell titulo="Cargando…">{null}</Shell>;
-  if (!r) return <Shell titulo="No encontramos esa ficha">{<Vacio>Intenta desde el inicio.</Vacio>}</Shell>;
+  const { data: r } = useQuery(restauranteQuery(id));
+  const { data: evaluaciones } = useQuery(evaluacionesQuery(id));
+  const { data: aportes } = useQuery(aportesFichaQuery(id));
 
-  const platos = mencionados((evals ?? []).map((e) => e.plato));
-  const ambientes = mencionados((evals ?? []).map((e) => e.ambiente));
-  const contextos = mencionados((evals ?? []).map((e) => e.con_quien));
-  const favorito = favs.includes(r.id);
+  if (!r || !c) return <div className="gm-empty"><p>Cargando ficha…</p></div>;
+
+  const match = calcularMatch(r, c).match;
+  const latestComment = (evaluaciones ?? []).find((x:any) => String(x.comentario ?? "").trim())?.comentario;
+  const dishes = (evaluaciones ?? []).map((x:any) => String(x.plato ?? "").trim()).filter(Boolean).slice(0,5);
+  const favorite = favs.includes(r.id);
 
   return (
-    <Shell>
-      {r.imagen_url ? (
-        <img src={r.imagen_url} alt={r.nombre} className="mt-6 h-52 w-full object-cover" />
-      ) : null}
-
-      <div className="pt-6">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h1 className="text-[2rem] leading-[1.1]">{r.nombre}</h1>
-            <p className="mt-2 text-sm text-muted-foreground">
-              {r.cocina.join(" · ") || "Cocina pendiente"} · {rangoPrecio(r)}
-            </p>
+    <div className="gm-app">
+      <div className="gm-detail">
+        <div className="gm-detail-hero">
+          <img src={imagenRestaurante(r)} alt={r.nombre} />
+          <div className="gm-detail-topbar">
+            <Link to="/matches" className="gm-icon-button" aria-label="Volver"><ArrowLeft size={18} /></Link>
+            <button className="gm-icon-button" onClick={async () => setFavs(await alternarFavorito(r.id))} aria-label="Guardar">
+              <Heart size={18} fill={favorite ? "currentColor" : "none"} />
+            </button>
           </div>
-          <button
-            type="button"
-            aria-label="Favorito"
-            onClick={async () => setFavs(await alternarFavorito(r.id))}
-            className={favorito ? "text-gold" : "text-muted-foreground"}
-          >
-            <Heart size={22} fill={favorito ? "currentColor" : "none"} />
-          </button>
-        </div>
-        <div className="mt-4 flex items-end justify-between gap-4">
-          <EstadoBadge estado={r.estado} />
-          <div className="text-right">
-            <p className="eyebrow">Precio por persona</p>
-            <p className="serif mt-1 text-2xl">{rangoPrecio(r)}</p>
+          <div className="gm-detail-copy">
+            <div className="gm-match-badge"><strong>{match}%</strong><span>MATCH</span></div>
+            <h1>{r.nombre}</h1>
+            <p>{r.cocina.join(" · ") || "Gastronomía"} · {rangoPrecio(r)}</p>
+            <p><MapPin size={11} style={{verticalAlign:"-2px",marginRight:3}} /> {c.zonaNombre || "Cerca de ti"}</p>
           </div>
         </div>
-        <div className="rule-gold mt-5" />
-      </div>
 
-      <section className="border-b border-border py-6">
-        <p className="eyebrow">Valoración de comunidad</p>
-        <div className="mt-3">
-          <Zagat r={r} />
+        <div className="gm-tabs">
+          <span className="gm-tab active">Resumen</span>
+          <span className="gm-tab">Menú</span>
+          <span className="gm-tab">Opiniones</span>
         </div>
-        <p className="mt-4 text-xs text-muted-foreground">
-          Puntuaciones sobre 30. El precio se muestra aparte como rango real por persona.
-        </p>
-        <p className="mt-3 text-xs text-muted-foreground">
-          {r.num_evaluaciones} evaluaciones de comunidad
-          {r.pct_volveria != null ? ` · ${r.pct_volveria}% volvería` : ""}
-          {r.pct_recomendaria != null ? ` · ${r.pct_recomendaria}% recomendaría` : ""}
-        </p>
-      </section>
 
-      <section className="border-b border-border py-6">
-        <p className="eyebrow">Información objetiva</p>
-        <dl className="mt-3 space-y-2 text-sm">
-          <Dato k="Dirección" v={r.direccion} />
-          <Dato k="Horarios" v={r.horarios} />
-          <Dato k="Teléfono" v={r.telefono} />
-          <Dato k="Web" v={r.web} />
-          <Dato k="Capacidad" v={r.capacidad_max ? `Hasta ${r.capacidad_max} personas` : null} />
-          <Dato k="Fuente" v={r.fuente} />
-        </dl>
-      </section>
-
-      <section className="border-b border-border py-6">
-        <p className="eyebrow">La comunidad dice…</p>
-        {platos.length + ambientes.length + contextos.length === 0 ? (
-          <p className="mt-3 text-sm text-muted-foreground">
-            Aún no hay aportes de comunidad para este lugar.
-          </p>
-        ) : (
-          <ul className="mt-3 space-y-2 text-sm">
-            {platos.map(([v, n]) => (
-              <li key={`p-${v}`}>Excelente plato: {v} <span className="text-muted-foreground">({n})</span></li>
-            ))}
-            {ambientes.map(([v, n]) => (
-              <li key={`a-${v}`}>Ambiente {v.toLowerCase()} <span className="text-muted-foreground">({n})</span></li>
-            ))}
-            {contextos.map(([v, n]) => (
-              <li key={`c-${v}`}>Muy bueno para ir con {v.toLowerCase()} <span className="text-muted-foreground">({n})</span></li>
-            ))}
-          </ul>
-        )}
-        {(aportes ?? []).length > 0 && (
-          <ul className="mt-4 space-y-2 border-t border-border pt-4 text-sm">
-            {(aportes ?? []).map((a) => (
-              <li key={a.id}>
-                <span className="eyebrow">{a.tipo}</span> — {a.valor}
-                {a.comentario ? <span className="text-muted-foreground"> · {a.comentario}</span> : null}
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      <section className="border-b border-border py-6">
-        <p className="eyebrow">Comentarios de comunidad</p>
-        <ul className="mt-3 space-y-4">
-          {(evals ?? []).filter((e) => e.comentario).length === 0 && (
-            <li className="text-sm text-muted-foreground">Todavía no hay comentarios.</li>
-          )}
-          {(evals ?? [])
-            .filter((e) => e.comentario)
-            .map((e) => (
-              <li key={e.id} className="border-l border-gold pl-3 text-sm">
-                <p>{e.comentario}</p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Food {e.food}/30 · Decor {e.decor}/30 · Service {e.service}/30
-                  {e.con_quien ? ` · ${e.con_quien}` : ""}
-                </p>
-              </li>
-            ))}
-        </ul>
-      </section>
-
-      {r.lat != null && r.lng != null && (
-        <section className="border-b border-border py-6">
-          <p className="eyebrow">Ubicación</p>
-          <div className="mt-3 border border-border">
-            <ClientOnly fallback={<div className="h-[260px] bg-muted" />}>
-              <Suspense fallback={<div className="h-[260px] bg-muted" />}>
-                <MapView restaurantes={[r]} centro={[r.lat, r.lng]} zoom={15} alto={260} />
-              </Suspense>
-            </ClientOnly>
-          </div>
-          <div className="mt-3 grid gap-2 sm:grid-cols-2">
-            <a
-              className="btn-outline w-full text-center"
-              href={`https://www.google.com/maps/dir/?api=1&destination=${r.lat},${r.lng}`}
-              target="_blank"
-              rel="noreferrer"
-            >
-              Cómo llegar con Google Maps →
-            </a>
-            <a
-              className="btn-outline w-full text-center"
-              href={`https://www.waze.com/ul?ll=${r.lat}%2C${r.lng}&navigate=yes`}
-              target="_blank"
-              rel="noreferrer"
-            >
-              Abrir en Waze →
-            </a>
-          </div>
+        <section className="gm-detail-highlight">
+          <p className="gm-label">¿POR QUÉ TE LO RECOMENDAMOS?</p>
+          <p>{r.descripcion || "Una recomendación construida con la información disponible y la experiencia de la comunidad GUÍA·ME."}</p>
+          {r.contextos?.length ? <p style={{marginBottom:0}}>Ideal para: {r.contextos.join(", ").toLowerCase()}.</p> : null}
         </section>
-      )}
 
-      <div className="grid gap-3 py-8 sm:grid-cols-2">
-        <Link to="/evaluar/$id" params={{ id: r.id }} className="btn-primary w-full">
-          Evaluar este lugar
-        </Link>
-        <Link to="/completar/$id" params={{ id: r.id }} className="btn-outline w-full">
-          Completar ficha
-        </Link>
+        <section className="gm-detail-section">
+          <h2>Valoración GUÍA·ME</h2>
+          <Zagat r={r} />
+          <p style={{fontSize:9,marginTop:10}}>Puntuaciones sobre 30. El precio se muestra aparte como rango real por persona: <strong>{rangoPrecio(r)}</strong>.</p>
+        </section>
+
+        <section className="gm-detail-section">
+          <h2>La experiencia</h2>
+          <p>{r.descripcion || "Cocina y servicio evaluados por la comunidad. La ficha se actualiza a medida que recibimos nuevas experiencias."}</p>
+          {latestComment ? <p style={{fontFamily:"Playfair Display,serif",fontSize:16}}>“{latestComment}”</p> : null}
+          {dishes.length > 0 ? (
+            <>
+              <p className="gm-label" style={{marginTop:14}}>LO QUE PEDIR</p>
+              <p>{dishes.map((d,i) => <span key={i}><strong>{d}</strong>{i<dishes.length-1 ? " · " : ""}</span>)}</p>
+            </>
+          ) : null}
+          <p style={{fontSize:9,color:"#898279"}}>{evaluaciones?.length ?? 0} evaluaciones · {aportes?.length ?? 0} aportes de ficha</p>
+        </section>
+
+        <section className="gm-detail-section">
+          <h2>Servicios y ubicación</h2>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+            {r.ambiente?.slice(0,4).map(x => <span key={x} style={{fontSize:9,padding:"9px",border:"1px solid #e1dacf"}}>＋ {x}</span>)}
+          </div>
+          <p style={{marginTop:12}}>{r.direccion || "Dirección pendiente"}</p>
+        </section>
+
+        <div className="gm-detail-actions">
+          <a className="gm-secondary" href={r.lat != null && r.lng != null ? "https://www.google.com/maps/dir/?api=1&destination=" + r.lat + "," + r.lng : "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(r.direccion || r.nombre)} target="_blank" rel="noreferrer">CÓMO LLEGAR</a>
+          <Link className="gm-cta" to="/evaluar/$id" params={{id}}>EVALUAR ESTE LUGAR</Link>
+        </div>
       </div>
-    </Shell>
-  );
-}
-
-function Dato({ k, v }: { k: string; v: string | null }) {
-  return (
-    <div className="flex justify-between gap-4">
-      <dt className="text-muted-foreground">{k}</dt>
-      <dd className="text-right">{v ?? "Pendiente"}</dd>
+      <div style={{height:72}} />
     </div>
   );
-}
-
-function mencionados(valores: (string | null)[]): [string, number][] {
-  const mapa = new Map<string, number>();
-  for (const v of valores) {
-    const s = (v ?? "").trim();
-    if (!s) continue;
-    mapa.set(s, (mapa.get(s) ?? 0) + 1);
-  }
-  return [...mapa.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3);
 }
