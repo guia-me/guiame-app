@@ -1,94 +1,106 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { Shell, TarjetaRestaurante, Vacio } from "@/components/guiame/ui";
-import {
-  alternarFavorito,
-  calcularMatch,
-  leerContexto,
-  leerFavoritos,
-  type Contexto,
-} from "@/lib/guiame";
+import { MapPin } from "lucide-react";
+import { Shell, TarjetaRestaurante, Vacio, Marca } from "@/components/guiame/ui";
+import { alternarFavorito, calcularMatch, leerContexto, leerFavoritos, type Contexto } from "@/lib/guiame";
 import { buscarRestaurantes } from "@/lib/queries";
 
 export const Route = createFileRoute("/matches")({
-  // This route depends on client state (localStorage/geolocation) or interactive data fetching.
-  // Keep the initial request on the SSR shell and render the route on the browser.
   ssr: false,
-  head: () => ({
-    meta: [
-      { title: "Tus 3 lugares — GUÍA·ME" },
-      {
-        name: "description",
-        content: "Los 3 restaurantes que mejor encajan con tu ocasión, tu zona y tu presupuesto.",
-      },
-      { property: "og:title", content: "Tus 3 lugares — GUÍA·ME" },
-      {
-        property: "og:description",
-        content: "MATCH según zona, presupuesto, cocina, tipo de salida, ambiente y personas.",
-      },
-    ],
-  }),
+  head: () => ({ meta: [{ title: "Tu MATCH inteligente — GUÍA·ME" }] }),
   component: Matches,
 });
 
 function Matches() {
   const [c, setC] = useState<Contexto | null>(null);
   const [favs, setFavs] = useState<string[]>([]);
+  const [procesando, setProcesando] = useState(true);
 
   useEffect(() => {
-    setC(leerContexto());
+    const saved = leerContexto();
+    setC(saved);
     setFavs(leerFavoritos());
+    if (saved) {
+      const t = window.setTimeout(() => setProcesando(false), 950);
+      return () => window.clearTimeout(t);
+    }
+    setProcesando(false);
   }, []);
 
-  const { data, isLoading } = useQuery({
+  const query = useQuery({
     queryKey: ["matches", c],
     enabled: !!c,
     queryFn: () => buscarRestaurantes(c!),
   });
 
-  const top = (data ?? [])
-    .map((r) => ({ r, ...calcularMatch(r, c!) }))
-    .sort((a, b) => b.match - a.match)
+  if (procesando) {
+    return (
+      <div className="gm-processing">
+        <div className="gm-processing-logo"><Marca /></div>
+        <div className="gm-processing-map"><MapPin className="gm-processing-pin" size={38} /></div>
+        <h2>Analizando tus preferencias</h2>
+        <p>Estamos cruzando zona, presupuesto y tus preferencias con la mejor información disponible…</p>
+        <div className="gm-progress"><span /></div>
+        <p style={{marginTop:14}}>Casi listo…</p>
+      </div>
+    );
+  }
+
+  const top = (query.data ?? [])
+    .map(r => ({ r, ...calcularMatch(r, c!) }))
+    .sort((a,b) => b.match - a.match)
     .slice(0, 3);
 
   return (
-    <Shell titulo="Estos son tus 3 lugares" subtitulo={resumen(c)}>
-      <div className="py-6">
-        <Link to="/mapa" className="btn-outline mb-5 w-full text-center">
-          Ver estos lugares en el mapa →
-        </Link>
-        <div className="space-y-5">
-        {!c && <Vacio>Primero cuéntanos tu contexto en el inicio.</Vacio>}
-        {c && isLoading && <p className="text-sm text-muted-foreground">Buscando…</p>}
-        {c && !isLoading && top.length === 0 && (
+    <Shell titulo="Tu MATCH inteligente" subtitulo={resumen(c)}>
+      <div className="gm-results">
+        {!c && <Vacio>Primero cuéntanos qué buscas en el inicio.</Vacio>}
+        {c && query.isLoading && <p className="gm-card-meta">Buscando tus mejores opciones…</p>}
+        {c && query.error && <Vacio>No pudimos consultar los restaurantes. Intenta de nuevo.</Vacio>}
+        {c && !query.isLoading && !query.error && top.length === 0 && (
           <Vacio>
-            Todavía no hay restaurantes en esa zona.{" "}
-            <Link to="/agregar" className="text-green underline">
-              Agrega el que conoces
-            </Link>
-            .
+            Todavía no hay restaurantes en esta zona.{" "}
+            <Link to="/agregar" className="gm-text-link">Agrega el que conoces.</Link>
           </Vacio>
         )}
-        {top.map(({ r, match }) => (
-          <div key={r.id}>
-            <TarjetaRestaurante
-              r={r}
-              match={match}
-              zonaNombre={c?.usarUbicacion ? undefined : c?.zonaNombre}
-              favorito={favs.includes(r.id)}
-              onFavorito={async () => setFavs(await alternarFavorito(r.id))}
-            />
-            <Link
-              to="/por-que/$id"
-              params={{ id: r.id }}
-              className="mt-2 inline-block text-[0.65rem] uppercase tracking-[0.18em] text-gold"
-            >
-              Por qué encaja contigo
+
+        {c && top.length > 0 && (
+          <>
+            <div className="gm-results-summary">
+              <div>
+                <h1>Los 3 lugares que<br />mejor encajan contigo.</h1>
+                <p>{c.usarUbicacion ? "Cerca de ti" : c.zonaNombre} · {query.data?.length ?? 0} opciones encontradas</p>
+              </div>
+              <span className="gm-summary-pill">{c.personas ? c.personas + " personas" : "Tu grupo"}</span>
+            </div>
+
+            <div className="gm-result-list">
+              {top.map(({r,match}, index) => (
+                <div key={r.id}>
+                  <TarjetaRestaurante
+                    r={r}
+                    match={match}
+                    zonaNombre={c.usarUbicacion ? undefined : c.zonaNombre}
+                    favorito={favs.includes(r.id)}
+                    onFavorito={async () => setFavs(await alternarFavorito(r.id))}
+                    index={index}
+                  />
+                </div>
+              ))}
+            </div>
+
+            <Link to="/mapa" className="gm-secondary" style={{display:"flex",alignItems:"center",justifyContent:"center",textDecoration:"none",marginTop:14}}>
+              VER ESTOS LUGARES EN EL MAPA →
             </Link>
-          </div>
-        ))}
-        </div>
+
+            {(query.data ?? []).length > 3 && (
+              <p style={{textAlign:"center",margin:"14px 0 0",fontSize:9,color:"#777168"}}>
+                Hay {(query.data ?? []).length - 3} opciones adicionales en esta zona.
+              </p>
+            )}
+          </>
+        )}
       </div>
     </Shell>
   );
@@ -99,11 +111,8 @@ function resumen(c: Contexto | null) {
   const partes = [
     c.usarUbicacion ? "Cerca de ti" : c.zonaNombre,
     c.ciudadNombre,
-    c.conQuien,
-    c.personas ? `${c.personas} personas` : null,
+    c.personas ? c.personas + " personas" : null,
     c.presupuesto,
-    c.cocinas.join(", ") || null,
-    c.ambientes.join(", ") || null,
   ].filter(Boolean);
-  return partes.join(" · ");
+  return partes.join("  ·  ");
 }
