@@ -1,17 +1,23 @@
 import { Link } from "@tanstack/react-router";
-import { Heart, Home, Map as MapIcon, PlusCircle, Star } from "lucide-react";
+import { Heart, Home, Map, Plus, Star, ArrowRight, MapPin } from "lucide-react";
 import type { ReactNode } from "react";
-import {
-  ETIQUETA_ESTADO,
-  rangoPrecio,
-  type EstadoInfo,
-  type Restaurante,
-} from "@/lib/guiame";
+import { ETIQUETA_ESTADO, rangoPrecio, type EstadoInfo, type Restaurante } from "@/lib/guiame";
+
+const FALLBACK_IMAGES = [
+  "https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?auto=format&fit=crop&w=900&q=82",
+  "https://images.unsplash.com/photo-1566889110088-1119b49ce526?auto=format&fit=crop&w=900&q=82",
+  "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=900&q=82",
+];
+
+export function imagenRestaurante(r: Restaurante, index = 0) {
+  return r.imagen_url || FALLBACK_IMAGES[index % FALLBACK_IMAGES.length];
+}
 
 export function Marca() {
   return (
-    <span className="serif text-[1.4rem] tracking-tight">
-      GUÍA<span className="text-gold">·</span>ME
+    <span className="gm-logo">
+      GUÍA<span>·</span>ME
+      <small>TU GUÍA DE RESTAURANTES</small>
     </span>
   );
 }
@@ -22,43 +28,41 @@ export function Shell({
   subtitulo,
 }: {
   children: ReactNode;
-  titulo?: string | undefined;
-  subtitulo?: string | undefined;
+  titulo?: string;
+  subtitulo?: string;
 }) {
   return (
-    <div className="min-h-screen bg-background pb-24">
-      <header className="border-b border-border">
-        <div className="mx-auto flex max-w-3xl items-baseline justify-between px-5 py-4">
-          <Link
-            to="/"
-            aria-label="Ir al inicio de GUÍA·ME"
-            className="inline-flex items-center rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold"
-          >
-            <Marca />
-          </Link>
-          <span className="eyebrow">Guía gastronómica</span>
-        </div>
+    <div className="gm-app">
+      <header className="gm-header">
+        <Link to="/" className="gm-header-logo" aria-label="Ir al inicio">
+          <Marca />
+        </Link>
+        <Link to="/mapa" className="gm-header-map" aria-label="Abrir mapa">
+          <Map size={20} />
+        </Link>
       </header>
 
-      {titulo && (
-        <div className="mx-auto max-w-3xl px-5 pt-8">
-          <h1 className="text-[2rem] leading-[1.1]">{titulo}</h1>
-          {subtitulo && <p className="mt-2 text-sm text-muted-foreground">{subtitulo}</p>}
-          <div className="rule-gold mt-5" />
+      {titulo ? (
+        <div className="gm-page-heading">
+          <h1>{titulo}</h1>
+          {subtitulo ? <p>{subtitulo}</p> : null}
         </div>
-      )}
+      ) : null}
 
-      <main className="mx-auto max-w-3xl px-5">{children}</main>
-
-      <nav className="fixed bottom-0 left-0 right-0 border-t border-border bg-card/95 backdrop-blur">
-        <div className="mx-auto flex max-w-3xl items-center justify-around px-4 py-2.5">
-          <NavItem to="/" icon={<Home size={18} />} label="Inicio" />
-          <NavItem to="/mapa" icon={<MapIcon size={18} />} label="Mapa" />
-          <NavItem to="/favoritos" icon={<Heart size={18} />} label="Favoritos" />
-          <NavItem to="/agregar" icon={<PlusCircle size={18} />} label="Agregar" />
-        </div>
-      </nav>
+      <main className="gm-main">{children}</main>
+      <BottomNav />
     </div>
+  );
+}
+
+function BottomNav() {
+  return (
+    <nav className="gm-bottom-nav">
+      <NavItem to="/" icon={<Home size={19} />} label="Inicio" exact />
+      <NavItem to="/mapa" icon={<Map size={19} />} label="Explorar" />
+      <NavItem to="/favoritos" icon={<Heart size={19} />} label="Favoritos" />
+      <NavItem to="/agregar" icon={<Plus size={19} />} label="Agregar" />
+    </nav>
   );
 }
 
@@ -66,20 +70,22 @@ function NavItem({
   to,
   icon,
   label,
+  exact,
 }: {
   to: "/" | "/mapa" | "/favoritos" | "/agregar";
   icon: ReactNode;
   label: string;
+  exact?: boolean;
 }) {
   return (
     <Link
       to={to}
-      className="flex flex-col items-center gap-1 px-3 py-1 text-muted-foreground"
-      activeProps={{ className: "text-foreground" }}
-      activeOptions={{ exact: to === "/" }}
+      activeProps={{ className: "gm-nav-item active" }}
+      activeOptions={{ exact: !!exact }}
+      className="gm-nav-item"
     >
       {icon}
-      <span className="text-[0.62rem] uppercase tracking-[0.14em]">{label}</span>
+      <span>{label}</span>
     </Link>
   );
 }
@@ -94,7 +100,7 @@ export function Chip({
   onClick?: () => void;
 }) {
   return (
-    <button type="button" onClick={onClick} className={activo ? "chip-base chip-active" : "chip-base"}>
+    <button type="button" onClick={onClick} className={activo ? "gm-chip active" : "gm-chip"}>
       {children}
     </button>
   );
@@ -102,44 +108,39 @@ export function Chip({
 
 export function Campo({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <section className="py-5">
-      <p className="eyebrow">{label}</p>
-      <div className="mt-3 flex flex-wrap gap-2">{children}</div>
+    <section className="gm-filter-section">
+      <p className="gm-label">{label}</p>
+      <div className="gm-chips">{children}</div>
     </section>
   );
 }
 
 export function EstadoBadge({ estado }: { estado: EstadoInfo }) {
-  const tono =
-    estado === "verificado"
-      ? "border-green text-green"
-      : estado === "comunidad"
-        ? "border-gold text-gold"
-        : "border-border text-muted-foreground";
+  return <span className="gm-status">{ETIQUETA_ESTADO[estado]}</span>;
+}
+
+export function MatchBadge({ match }: { match: number }) {
   return (
-    <span
-      className={`inline-block border px-2 py-[2px] text-[0.6rem] uppercase tracking-[0.18em] ${tono}`}
-    >
-      {ETIQUETA_ESTADO[estado]}
-    </span>
+    <div className="gm-match-badge">
+      <strong>{match}%</strong>
+      <span>MATCH</span>
+    </div>
   );
 }
 
 export function Zagat({ r }: { r: Restaurante }) {
-  const item = (etiqueta: string, valor: number | null) => (
-    <div className="flex-1">
-      <p className="eyebrow">{etiqueta}</p>
-      <p className="serif mt-1 text-xl">
-        {valor != null ? valor : "—"}
-        <span className="text-sm text-muted-foreground">/30</span>
-      </p>
+  const item = (label: string, value: number | null) => (
+    <div>
+      <span>{label}</span>
+      <strong>{value != null ? value : "—"}</strong>
+      <small>{value != null ? "/30" : ""}</small>
     </div>
   );
   return (
-    <div className="grid grid-cols-3 gap-4">
-      {item("Food", r.food_avg)}
-      {item("Decor", r.decor_avg)}
-      {item("Service", r.service_avg)}
+    <div className="gm-score-grid">
+      {item("Comida", r.food_avg)}
+      {item("Decoración", r.decor_avg)}
+      {item("Servicio", r.service_avg)}
     </div>
   );
 }
@@ -150,54 +151,53 @@ export function TarjetaRestaurante({
   zonaNombre,
   favorito,
   onFavorito,
+  index = 0,
 }: {
   r: Restaurante;
-  match?: number | undefined;
-  zonaNombre?: string | undefined;
-  favorito?: boolean | undefined;
-  onFavorito?: (() => void) | undefined;
+  match?: number;
+  zonaNombre?: string;
+  favorito?: boolean;
+  onFavorito?: () => void;
+  index?: number;
 }) {
   return (
-    <article className="border border-border bg-card">
-      <div className="flex items-start justify-between gap-3 border-b border-border px-4 py-3">
-        <div>
-          {match != null && (
-            <p className="eyebrow text-gold">
-              MATCH <span className="serif ml-1 text-lg text-foreground">{match}%</span>
+    <article className="gm-result-card">
+      <Link to="/restaurante/$id" params={{ id: r.id }} className="gm-card-photo">
+        <img src={imagenRestaurante(r, index)} alt={r.nombre} />
+        {match != null ? <MatchBadge match={match} /> : null}
+      </Link>
+
+      <div className="gm-card-body">
+        <div className="gm-card-title-row">
+          <div>
+            <Link to="/restaurante/$id" params={{ id: r.id }}>
+              <h2>{r.nombre}</h2>
+            </Link>
+            <p className="gm-card-meta">
+              {r.cocina.join(" · ") || "Gastronomía"} · {rangoPrecio(r)}
             </p>
-          )}
-          <Link to="/restaurante/$id" params={{ id: r.id }}>
-            <h3 className="mt-1 text-xl leading-snug">{r.nombre}</h3>
-          </Link>
-          <p className="mt-1 text-xs text-muted-foreground">
-            {zonaNombre ? `${zonaNombre} · ` : ""}
-            {r.cocina.join(" · ") || "Cocina pendiente"} · {rangoPrecio(r)}
-          </p>
+            {zonaNombre ? (
+              <p className="gm-card-zone">
+                <MapPin size={12} /> {zonaNombre}
+              </p>
+            ) : null}
+          </div>
+          {onFavorito ? (
+            <button
+              type="button"
+              className={favorito ? "gm-heart active" : "gm-heart"}
+              onClick={onFavorito}
+              aria-label={favorito ? "Quitar de favoritos" : "Guardar en favoritos"}
+            >
+              <Heart size={20} fill={favorito ? "currentColor" : "none"} />
+            </button>
+          ) : null}
         </div>
-        <button
-          type="button"
-          onClick={onFavorito}
-          aria-label="Favorito"
-          className={favorito ? "text-gold" : "text-muted-foreground"}
-        >
-          <Heart size={20} fill={favorito ? "currentColor" : "none"} />
-        </button>
-      </div>
-
-      {r.imagen_url ? (
-        <img src={r.imagen_url} alt={r.nombre} className="h-40 w-full object-cover" />
-      ) : null}
-
-      <div className="px-4 py-4">
         <Zagat r={r} />
-        <div className="mt-4 flex items-center justify-between">
+        <div className="gm-card-footer">
           <EstadoBadge estado={r.estado} />
-          <Link
-            to="/restaurante/$id"
-            params={{ id: r.id }}
-            className="text-[0.65rem] uppercase tracking-[0.18em] text-green"
-          >
-            Ver ficha
+          <Link to="/por-que/$id" params={{ id: r.id }} className="gm-text-link">
+            ¿Por qué? <ArrowRight size={13} />
           </Link>
         </div>
       </div>
@@ -207,9 +207,9 @@ export function TarjetaRestaurante({
 
 export function Vacio({ children }: { children: ReactNode }) {
   return (
-    <div className="border border-dashed border-border px-5 py-10 text-center">
-      <Star size={18} className="mx-auto text-gold" />
-      <p className="mt-3 text-sm text-muted-foreground">{children}</p>
+    <div className="gm-empty">
+      <Star size={20} />
+      <p>{children}</p>
     </div>
   );
 }
