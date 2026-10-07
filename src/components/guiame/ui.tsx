@@ -30,10 +30,11 @@ export function Shell({
   children: ReactNode;
   titulo?: string;
   subtitulo?: string;
+  home?: boolean;
 }) {
   return (
-    <div className="gm-app">
-      <header className="gm-header">
+    <div className={home ? "gm-app gm-home-shell" : "gm-app"}>
+      <header className={home ? "gm-header gm-header-home" : "gm-header"}>
         <Link to="/" className="gm-header-logo" aria-label="Ir al inicio">
           <Marca />
         </Link>
