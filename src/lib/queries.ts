@@ -1,6 +1,6 @@
 // Consultas a la base de datos. La geografía SIEMPRE se filtra en el servidor.
 import { supabase } from "@/integrations/supabase/client";
-import type { Contexto, Restaurante } from "./guiame";
+import { normalizarRestaurante, type Contexto, type Restaurante } from "./guiame";
 
 export type Pais = { id: string; nombre: string; codigo_iso2: string | null };
 export type Ciudad = { id: string; nombre: string; pais_id: string };
@@ -80,7 +80,7 @@ export async function buscarRestaurantes(c: Contexto): Promise<Restaurante[]> {
 
   // Defensa adicional: aunque Supabase ya filtró, no dejamos pasar datos
   // inconsistentes si una fuente externa llegara a devolverlos.
-  return ((data ?? []) as unknown as Restaurante[]).filter((r) => {
+  return ((data ?? []) as unknown[]).map(normalizarRestaurante).filter((r) => {
     if (!c.usarUbicacion) {
       if (c.paisId && r.pais_id !== c.paisId) return false;
       if (c.ciudadId && r.ciudad_id !== c.ciudadId) return false;
@@ -95,7 +95,7 @@ export const restauranteQuery = (id: string) => ({
   queryFn: async () => {
     const { data, error } = await supabase.from("restaurantes").select(CAMPOS).eq("id", id).single();
     if (error) throw error;
-    return data as unknown as Restaurante;
+    return normalizarRestaurante(data);
   },
 });
 
@@ -133,7 +133,7 @@ export const porIdsQuery = (ids: string[]) => ({
   queryFn: async (): Promise<Restaurante[]> => {
     const { data, error } = await supabase.from("restaurantes").select(CAMPOS).in("id", ids);
     if (error) throw error;
-    return (data ?? []) as unknown as Restaurante[];
+    return ((data ?? []) as unknown[]).map(normalizarRestaurante);
   },
 });
 
@@ -163,6 +163,6 @@ export const mapaQuery = (
 
     const { data, error } = await q;
     if (error) throw error;
-    return (data ?? []) as unknown as Restaurante[];
+    return ((data ?? []) as unknown[]).map(normalizarRestaurante);
   },
 });
