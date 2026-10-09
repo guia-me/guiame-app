@@ -49,10 +49,13 @@ function Matches() {
 
   // La cocina elegida es un filtro real, no solo puntos dentro del MATCH.
   // Si no hay coincidencias, no rellenamos los resultados con restaurantes de otra cocina.
-  const elegibles = (query.data ?? []).filter(r =>
-    c!.cocinas.length === 0 ||
-    c!.cocinas.some(buscada => r.cocina.some(actual => coincideCocina(actual, buscada)))
-  );
+  const elegibles = (query.data ?? []).filter(r => {
+    // No recomendar sitios culturales cargados por error en la tabla de restaurantes.
+    const categorias = r.cocina.map(x => x.normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").trim().toLowerCase());
+    if (categorias.some(x => ["cultural", "museo", "teatro", "atraccion", "atracciones"].includes(x))) return false;
+    return c!.cocinas.length === 0 ||
+      c!.cocinas.some(buscada => r.cocina.some(actual => coincideCocina(actual, buscada)));
+  });
   const top = elegibles
     .map(r => ({ r, ...calcularMatch(r, c!) }))
     .sort((a,b) => b.match - a.match)
@@ -76,7 +79,7 @@ function Matches() {
             <div className="gm-results-summary">
               <div>
                 <h1>Los 3 lugares que<br />mejor encajan contigo.</h1>
-                <p>{c.usarUbicacion ? "Cerca de ti" : c.zonaNombre} · {query.data?.length ?? 0} opciones encontradas</p>
+                <p>{c.usarUbicacion ? "Cerca de ti" : c.zonaNombre} · {elegibles.length} opciones compatibles</p>
               </div>
               <span className="gm-summary-pill">{c.personas ? c.personas + " personas" : "Tu grupo"}</span>
             </div>
