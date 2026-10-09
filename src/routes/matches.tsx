@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { MapPin } from "lucide-react";
 import { Shell, TarjetaRestaurante, Vacio, Marca } from "@/components/guiame/ui";
-import { alternarFavorito, calcularMatch, leerContexto, leerFavoritos, type Contexto } from "@/lib/guiame";
+import { alternarFavorito, calcularMatch, coincideCocina, leerContexto, leerFavoritos, type Contexto } from "@/lib/guiame";
 import { buscarRestaurantes } from "@/lib/queries";
 
 export const Route = createFileRoute("/matches")({
@@ -47,7 +47,13 @@ function Matches() {
     );
   }
 
-  const top = (query.data ?? [])
+  // La cocina elegida es un filtro real, no solo puntos dentro del MATCH.
+  // Si no hay coincidencias, no rellenamos los resultados con restaurantes de otra cocina.
+  const elegibles = (query.data ?? []).filter(r =>
+    c!.cocinas.length === 0 ||
+    c!.cocinas.some(buscada => r.cocina.some(actual => coincideCocina(actual, buscada)))
+  );
+  const top = elegibles
     .map(r => ({ r, ...calcularMatch(r, c!) }))
     .sort((a,b) => b.match - a.match)
     .slice(0, 3);
@@ -60,7 +66,7 @@ function Matches() {
         {c && query.error && <Vacio>No pudimos consultar los restaurantes. Intenta de nuevo.</Vacio>}
         {c && !query.isLoading && !query.error && top.length === 0 && (
           <Vacio>
-            Todavía no hay restaurantes en esta zona.{" "}
+            {c.cocinas.length > 0 ? `No encontramos restaurantes de cocina ${c.cocinas.join(" / ")} en esta zona.` : "Todavía no hay restaurantes en esta zona."}{" "}
             <Link to="/agregar" className="gm-text-link">Agrega el que conoces.</Link>
           </Vacio>
         )}
@@ -94,9 +100,9 @@ function Matches() {
               VER ESTOS LUGARES EN EL MAPA →
             </Link>
 
-            {(query.data ?? []).length > 3 && (
+            {elegibles.length > 3 && (
               <p style={{textAlign:"center",margin:"14px 0 0",fontSize:9,color:"#777168"}}>
-                Hay {(query.data ?? []).length - 3} opciones adicionales en esta zona.
+                Hay {elegibles.length - 3} opciones adicionales en esta zona.
               </p>
             )}
           </>
