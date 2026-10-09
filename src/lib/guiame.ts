@@ -69,6 +69,8 @@ export const COCINAS = [
   "Vegetariana",
   "Saludable",
   "Café",
+  "Cafetería",
+  "Brunch",
   "Desayunos",
   "China",
   "Tailandesa",
@@ -271,7 +273,10 @@ export function coincideCocina(restaurante: string, buscada: string): boolean {
     tailandesa: ["tailandesa", "thai"],
     india: ["india", "indian"],
     arabe: ["arabe", "arab", "libanesa"],
-    cafe: ["cafe", "coffee"],
+    cafe: ["cafe", "cafeteria", "coffee"],
+    cafeteria: ["cafe", "cafeteria", "coffee"],
+    brunch: ["brunch", "desayunos", "desayuno", "cafe", "cafeteria"],
+    desayunos: ["desayunos", "desayuno", "brunch", "cafe", "cafeteria"],
   };
   const opciones = grupos[b] ?? [b];
   const valores = a.split(/[\/;,|]+/).map(x => x.trim()).filter(Boolean);
