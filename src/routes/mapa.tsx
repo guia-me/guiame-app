@@ -20,7 +20,7 @@ function Mapa() {
     mapaQuery(c?.ciudadId ?? null, c?.zonaId ?? null, c?.lat ?? null, c?.lng ?? null, c?.usarUbicacion ?? false),
   );
 
-  const lugares = data ?? [];
+  const lugares = (data ?? []).filter((r) => r.lat != null && r.lng != null);
   const first = lugares[0];
   const center: [number, number] = c?.lat != null && c?.lng != null
     ? [c.lat, c.lng]
@@ -40,20 +40,34 @@ function Mapa() {
           <MapView restaurantes={lugares} centro={center} zoom={c?.usarUbicacion ? 12 : 14} alto={window.innerHeight - 140} />
         </div>
 
-        {first ? (
-          <Link to="/restaurante/$id" params={{id:first.id}} className="gm-map-card" style={{textDecoration:"none",color:"inherit"}}>
-            <img src={imagenRestaurante(first)} alt="" />
-            <div style={{flex:1}}>
-              <div style={{display:"flex",justifyContent:"space-between",gap:8}}>
-                <div>
-                  <h3>{first.nombre}</h3>
-                  <p>{first.cocina.join(" · ")} · {rangoPrecio(first)}</p>
+        {lugares.length > 0 ? (
+          <div className="gm-map-cards" aria-label="Restaurantes visibles en el mapa">
+            {lugares.map((restaurante) => (
+              <Link
+                key={restaurante.id}
+                to="/restaurante/$id"
+                params={{ id: restaurante.id }}
+                className="gm-map-card"
+                style={{ textDecoration: "none", color: "inherit" }}
+              >
+                <img src={imagenRestaurante(restaurante)} alt="" loading="lazy" />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "flex-start" }}>
+                    <div style={{ minWidth: 0 }}>
+                      <h3>{restaurante.nombre}</h3>
+                      <p>{restaurante.cocina.join(" · ") || "Cocina pendiente"} · {rangoPrecio(restaurante)}</p>
+                    </div>
+                    <MatchBadge match={c ? calcularMatch(restaurante, c).match : 0} />
+                  </div>
                 </div>
-                <MatchBadge match={c ? calcularMatch(first,c).match : 0} />
-              </div>
-            </div>
-          </Link>
-        ) : null}
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <div className="gm-map-empty">
+            No encontramos restaurantes con ubicación registrada en esta zona. Prueba otra zona o vuelve a intentarlo más tarde.
+          </div>
+        )}
       </div>
       <div style={{height:72}} />
     </div>
