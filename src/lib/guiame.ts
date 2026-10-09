@@ -225,6 +225,32 @@ function capacidadMinima(personas: string | null): number {
   }
 }
 
+/** Convierte campos de listas de Supabase a arrays seguros. Acepta arrays, JSON serializado o texto separado por comas/punto y coma/barra. */
+export function normalizarLista(value: unknown): string[] {
+  if (Array.isArray(value)) return value.filter((x): x is string => typeof x === "string").map(x => x.trim()).filter(Boolean);
+  if (typeof value !== "string" || !value.trim()) return [];
+  const raw = value.trim();
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (Array.isArray(parsed)) return parsed.filter((x): x is string => typeof x === "string").map(x => x.trim()).filter(Boolean);
+  } catch {
+    // El dato también puede venir como texto simple, no JSON.
+  }
+  return raw.split(/[,;|]/).map(x => x.trim()).filter(Boolean);
+}
+
+/** Normaliza los campos de lista de un restaurante antes de usarlos en la interfaz o en MATCH. */
+export function normalizarRestaurante(value: unknown): Restaurante {
+  const r = (value ?? {}) as Record<string, unknown>;
+  return {
+    ...(r as unknown as Restaurante),
+    cocina: normalizarLista(r.cocina),
+    especialidades: normalizarLista(r.especialidades),
+    ambiente: normalizarLista(r.ambiente),
+    contextos: normalizarLista(r.contextos),
+  };
+}
+
 export function calcularMatch(r: Restaurante, c: Contexto): ResultadoMatch {
   const razones: Razon[] = [];
   let total = 0;
@@ -292,7 +318,7 @@ export function calcularMatch(r: Restaurante, c: Contexto): ResultadoMatch {
       const grupo = equivalentes[b];
       return !!grupo?.some((alias) => a === alias || a.includes(alias) || alias.includes(a));
     };
-    const coincidencias = r.cocina.filter((x) => c.cocinas.some((buscada) => coincide(x, buscada)));
+    const coincidencias = normalizarLista(r.cocina).filter((x) => c.cocinas.some((buscada) => coincide(x, buscada)));
     pCocina = coincidencias.length > 0 ? PESOS_MATCH.cocina : 0;
     if (c.cocinas.length > 0) {
       razones.push({
@@ -326,7 +352,7 @@ export function calcularMatch(r: Restaurante, c: Contexto): ResultadoMatch {
       if (a === b || a.includes(b) || b.includes(a)) return true;
       return !!aliases[b]?.some(x => a === x || a.includes(x) || x.includes(a));
     };
-    const disponibles = [...(r.especialidades ?? []), r.platos_recomendados ?? ""].filter(Boolean);
+    const disponibles = [...normalizarLista(r.especialidades), r.platos_recomendados ?? ""].filter(Boolean);
     const hits = c.antojos.filter(a => disponibles.some(x => coincideAntojo(x, a)));
     pAntojo = hits.length ? PESOS_MATCH.antojo : 0;
     if (hits.length) razones.push({ etiqueta: "Antojo", detalle: `Buscas ${hits.join(", ")}`, puntos: pAntojo, de: PESOS_MATCH.antojo });
@@ -336,7 +362,7 @@ export function calcularMatch(r: Restaurante, c: Contexto): ResultadoMatch {
   // Tipo de salida (15) — combina el dato de ficha con la señal de comunidad.
   let pSalida = 0;
   if (c.conQuien) {
-    const enFicha = r.contextos.includes(c.conQuien);
+    const enFicha = normalizarLista(r.contextos).includes(c.conQuien);
     const señal = r.contexto_scores?.[c.conQuien];
     if (enFicha) pSalida += PESOS_MATCH.salida * 0.7;
     if (typeof señal === "number") pSalida += PESOS_MATCH.salida * 0.3 * (señal / 100);
@@ -362,7 +388,7 @@ export function calcularMatch(r: Restaurante, c: Contexto): ResultadoMatch {
   if (c.ambientes.length === 0) {
     pAmb = PESOS_MATCH.ambiente * 0.5;
   } else {
-    const coincidencias = r.ambiente.filter((x) => c.ambientes.includes(x));
+    const coincidencias = normalizarLista(r.ambiente).filter((x) => c.ambientes.includes(x));
     pAmb = coincidencias.length > 0 ? PESOS_MATCH.ambiente : 0;
     if (coincidencias.length > 0) {
       razones.push({
