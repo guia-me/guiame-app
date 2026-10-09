@@ -32,7 +32,7 @@ function Inicio() {
   const [modo, setModo] = useState<"zona" | "ubicacion" | null>(null);
   const [geoError, setGeoError] = useState<string | null>(null);
   const [geoLoading, setGeoLoading] = useState(false);
-  const [mostrarUbicacion, setMostrarUbicacion] = useState(false);
+  const [mostrarUbicacion, setMostrarUbicacion] = useState(true);
 
   useEffect(() => {
     const saved = leerContexto();
