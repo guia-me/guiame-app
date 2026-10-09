@@ -133,7 +133,9 @@ export const porIdsQuery = (ids: string[]) => ({
   queryFn: async (): Promise<Restaurante[]> => {
     const { data, error } = await supabase.from("restaurantes").select(CAMPOS).in("id", ids);
     if (error) throw error;
-    return ((data ?? []) as unknown[]).map(normalizarRestaurante);
+    return ((data ?? []) as unknown[])
+      .map(normalizarRestaurante)
+      .filter((r) => r.lat != null && r.lng != null);
   },
 });
 
@@ -146,7 +148,7 @@ export const mapaQuery = (
 ) => ({
   queryKey: ["mapa", ciudadId, zonaId, lat, lng, usarUbicacion],
   queryFn: async (): Promise<Restaurante[]> => {
-    let q = supabase.from("restaurantes").select(CAMPOS).not("lat", "is", null).limit(300);
+    let q = supabase.from("restaurantes").select(CAMPOS).not("lat", "is", null).not("lng", "is", null).limit(300);
 
     if (usarUbicacion && lat != null && lng != null) {
       const dLat = 0.18;
