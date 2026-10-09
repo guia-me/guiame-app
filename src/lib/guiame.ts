@@ -70,7 +70,6 @@ export const COCINAS = [
   "Saludable",
   "Café",
   "Cafetería",
-  "Brunch",
   "Desayunos",
   "China",
   "Tailandesa",
