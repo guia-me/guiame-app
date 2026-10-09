@@ -251,6 +251,33 @@ export function normalizarRestaurante(value: unknown): Restaurante {
   };
 }
 
+/** Coincidencia estricta de cocina para evitar mezclar categorías gastronómicas. */
+export function coincideCocina(restaurante: string, buscada: string): boolean {
+  const normalizar = (x: string) => x.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
+  const a = normalizar(restaurante);
+  const b = normalizar(buscada);
+  if (!a || !b) return false;
+  const grupos: Record<string, string[]> = {
+    china: ["china", "chinese", "comida china", "cantonesa", "sichuan", "szechuan"],
+    japonesa: ["japonesa", "japanese", "japon", "nikkei"],
+    italiana: ["italiana", "italian", "italy"],
+    mexicana: ["mexicana", "mexican", "mexico"],
+    mariscos: ["mariscos", "seafood", "frutos del mar"],
+    parrilla: ["parrilla", "bbq", "barbecue", "barbacoa", "grill"],
+    bbq: ["bbq", "barbecue", "barbacoa", "parrilla", "grill"],
+    espanola: ["espanola", "spanish"],
+    peruana: ["peruana", "peruvian"],
+    asiatica: ["asiatica", "asian"],
+    tailandesa: ["tailandesa", "thai"],
+    india: ["india", "indian"],
+    arabe: ["arabe", "arab", "libanesa"],
+    cafe: ["cafe", "coffee"],
+  };
+  const opciones = grupos[b] ?? [b];
+  const valores = a.split(/[\/;,|]+/).map(x => x.trim()).filter(Boolean);
+  return valores.some(valor => opciones.includes(valor));
+}
+
 export function calcularMatch(r: Restaurante, c: Contexto): ResultadoMatch {
   const razones: Razon[] = [];
   let total = 0;
@@ -306,19 +333,7 @@ export function calcularMatch(r: Restaurante, c: Contexto): ResultadoMatch {
   if (c.cocinas.length === 0) {
     pCocina = PESOS_MATCH.cocina * 0.5;
   } else {
-    const normalizar = (x: string) => x.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
-    const equivalentes: Record<string, string[]> = {
-      bbq: ["bbq", "barbecue", "barbacoa", "parrilla", "grill"],
-      parrilla: ["parrilla", "bbq", "barbecue", "barbacoa", "grill"],
-      mariscos: ["mariscos", "seafood"],
-    };
-    const coincide = (rest: string, buscada: string) => {
-      const a = normalizar(rest), b = normalizar(buscada);
-      if (a === b) return true;
-      const grupo = equivalentes[b];
-      return !!grupo?.some((alias) => a === alias || a.includes(alias) || alias.includes(a));
-    };
-    const coincidencias = normalizarLista(r.cocina).filter((x) => c.cocinas.some((buscada) => coincide(x, buscada)));
+    const coincidencias = normalizarLista(r.cocina).filter((x) => c.cocinas.some((buscada) => coincideCocina(x, buscada)));
     pCocina = coincidencias.length > 0 ? PESOS_MATCH.cocina : 0;
     if (c.cocinas.length > 0) {
       razones.push({
