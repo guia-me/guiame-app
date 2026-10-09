@@ -727,3 +727,8 @@ body{background:var(--gm-cream);color:var(--gm-ink)}
 
 
 /* GUÍA·ME production Vite deployment baseline — 2026-10-07 */
+
+
+/* GUÍA·ME: grupos de marcadores del mapa, en la paleta de la marca */
+.marker-cluster-small,.marker-cluster-medium,.marker-cluster-large{background:rgba(208,165,72,.28)!important}
+.marker-cluster-small div,.marker-cluster-medium div,.marker-cluster-large div{background:#1a1a17!important;color:#fff!important;border:2px solid #d0a548;box-sizing:border-box;font-family:inherit;font-weight:700}
