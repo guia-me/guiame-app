@@ -38,6 +38,7 @@ function Evaluar() {
   const [food, setFood] = useState(20);
   const [decor, setDecor] = useState(20);
   const [service, setService] = useState(20);
+  const [cost, setCost] = useState(20);
   const [ambiente, setAmbiente] = useState<string | null>(null);
   const [conQuien, setConQuien] = useState<string | null>(null);
   const [personas, setPersonas] = useState<string | null>(null);
@@ -58,6 +59,7 @@ function Evaluar() {
       food,
       decor,
       service,
+      cost,
       ambiente,
       con_quien: conQuien,
       personas,
@@ -81,6 +83,7 @@ function Evaluar() {
         <Escala label="Food" valor={food} onChange={setFood} />
         <Escala label="Decor" valor={decor} onChange={setDecor} />
         <Escala label="Service" valor={service} onChange={setService} />
+        <Escala label="Cost" valor={cost} onChange={setCost} />
 
         <Campo label="Ambiente">
           {AMBIENTES.map((x) => (
