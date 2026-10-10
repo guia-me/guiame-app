@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import { MapPin } from "lucide-react";
 import MapView from "@/components/guiame/MapView";
 import { imagenRestaurante, MatchBadge } from "@/components/guiame/ui";
-import { calcularMatch, leerContexto, rangoPrecio, type Contexto } from "@/lib/guiame";
-import { mapaQuery } from "@/lib/queries";
+import { calcularMatch, coincideCocina, leerContexto, rangoPrecio, type Contexto } from "@/lib/guiame";
+import { buscarRestaurantes } from "@/lib/queries";
 
 export const Route = createFileRoute("/mapa")({
   ssr: false,
@@ -16,11 +16,21 @@ export const Route = createFileRoute("/mapa")({
 function Mapa() {
   const [c, setC] = useState<Contexto | null>(null);
   useEffect(() => setC(leerContexto()), []);
-  const { data } = useQuery(
-    mapaQuery(c?.ciudadId ?? null, c?.zonaId ?? null, c?.lat ?? null, c?.lng ?? null, c?.usarUbicacion ?? false),
-  );
+  // El mapa comparte la búsqueda y los filtros de los resultados MATCH.
+  // Evita mostrar restaurantes de otra zona o de una cocina distinta.
+  const { data } = useQuery({
+    queryKey: ["matches", c],
+    enabled: !!c,
+    queryFn: () => buscarRestaurantes(c!),
+  });
 
-  const lugares = (data ?? []).filter((r) => r.lat != null && r.lng != null);
+  const compatibles = (data ?? []).filter((r) => {
+    const categorias = r.cocina.map(x => x.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase());
+    if (categorias.some(x => ["cultural", "museo", "teatro", "atraccion", "atracciones"].includes(x))) return false;
+    return !c || c.cocinas.length === 0 ||
+      c.cocinas.some(buscada => r.cocina.some(actual => coincideCocina(actual, buscada)));
+  });
+  const lugares = compatibles.filter((r) => r.lat != null && r.lng != null);
   const first = lugares[0];
   const center: [number, number] = c?.lat != null && c?.lng != null
     ? [c.lat, c.lng]
