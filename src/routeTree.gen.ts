@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AgregarRouteImport } from './routes/agregar'
 import { Route as FavoritosRouteImport } from './routes/favoritos'
 import { Route as MapaRouteImport } from './routes/mapa'
@@ -19,6 +20,11 @@ import { Route as EvaluarIdRouteImport } from './routes/evaluar.$id'
 import { Route as PorQueIdRouteImport } from './routes/por-que.$id'
 import { Route as RestauranteIdRouteImport } from './routes/restaurante.$id'
 
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -66,6 +72,7 @@ const RestauranteIdRoute = RestauranteIdRouteImport.update({
 } as any)
 
 export interface FileRoutesByFullPath {
+  '/admin': typeof AdminRoute
   '/': typeof IndexRoute
   '/agregar': typeof AgregarRoute
   '/favoritos': typeof FavoritosRoute
@@ -77,6 +84,7 @@ export interface FileRoutesByFullPath {
   '/restaurante/$id': typeof RestauranteIdRoute
 }
 export interface FileRoutesByTo {
+  '/admin': typeof AdminRoute
   '/': typeof IndexRoute
   '/agregar': typeof AgregarRoute
   '/favoritos': typeof FavoritosRoute
@@ -88,6 +96,7 @@ export interface FileRoutesByTo {
   '/restaurante/$id': typeof RestauranteIdRoute
 }
 export interface FileRoutesById {
+  '/admin': typeof AdminRoute
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/agregar': typeof AgregarRoute
@@ -102,6 +111,7 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
+    | '/admin'
     | '/'
     | '/agregar'
     | '/favoritos'
@@ -113,6 +123,7 @@ export interface FileRouteTypes {
     | '/restaurante/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/admin'
     | '/'
     | '/agregar'
     | '/favoritos'
@@ -123,6 +134,7 @@ export interface FileRouteTypes {
     | '/por-que/$id'
     | '/restaurante/$id'
   id:
+    | '/admin'
     | '__root__'
     | '/'
     | '/agregar'
@@ -136,6 +148,7 @@ export interface FileRouteTypes {
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
+  AdminRoute: typeof AdminRoute
   IndexRoute: typeof IndexRoute
   AgregarRoute: typeof AgregarRoute
   FavoritosRoute: typeof FavoritosRoute
@@ -216,6 +229,7 @@ declare module '@tanstack/react-router' {
 }
 
 const rootRouteChildren: RootRouteChildren = {
+  AdminRoute: AdminRoute,
   IndexRoute: IndexRoute,
   AgregarRoute: AgregarRoute,
   FavoritosRoute: FavoritosRoute,
