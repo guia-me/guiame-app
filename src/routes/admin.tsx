@@ -24,7 +24,7 @@ async function geolocalizarAporte(item: Contribution): Promise<{ lat: string; ln
     if (!response.ok) return null;
     const results = (await response.json()) as Array<{ lat?: string; lon?: string; name?: string; class?: string; type?: string; display_name?: string }>;
     const venueTypes = new Set(["restaurant", "fast_food", "cafe", "bar", "pub", "food_court", "ice_cream", "bakery"]);
-    const normalize = (value: string) => value.normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+    const normalize = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
     const wanted = normalize(item.nombre);
     const found = results.find((result) => {
       const isFoodVenue = result.class === "amenity" && venueTypes.has(result.type ?? "");
