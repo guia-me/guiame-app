@@ -18,17 +18,26 @@ function hasCoordinates(lat: unknown, lng: unknown): boolean {
   return valid(lat) && valid(lng);
 }
 
-async function geolocalizarAporte(item: Contribution): Promise<{ lat: string; lng: string } | null> {
+async function geolocalizarAporte(item: Contribution): Promise<{ coordinates: { lat: string; lng: string } | null; message: string }> {
   const { data, error } = await supabase.functions.invoke("guiame-admin-restaurants", {
     body: { action: "geocode", aporteId: item.id },
   });
   if (error) throw new Error(error.message || "No se pudo consultar el servicio de geolocalización.");
   if (data?.error) throw new Error(String(data.error));
-  if (!data?.lat || !data?.lng) return null;
+  if (!data?.lat || !data?.lng) {
+    return {
+      coordinates: null,
+      message: typeof data?.message === "string" ? data.message : "No se encontró una coincidencia fiable. Revisa el nombre o añade una dirección.",
+    };
+  }
   if (!Number.isFinite(Number(data.lat)) || !Number.isFinite(Number(data.lng))) {
     throw new Error("El servicio devolvió coordenadas inválidas.");
   }
-  return { lat: String(data.lat), lng: String(data.lng) };
+  const label = [data.matchedName, data.displayName].filter((value) => typeof value === "string" && value.trim()).join(" — ");
+  return {
+    coordinates: { lat: String(data.lat), lng: String(data.lng) },
+    message: label ? `Ubicación encontrada: ${label}` : "Ubicación encontrada. Revisa las coordenadas antes de aprobar.",
+  };
 }
 
 export const Route = createFileRoute("/admin")({
@@ -48,6 +57,7 @@ function AdminPage() {
   const [loadingItems, setLoadingItems] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [batchGeocoding, setBatchGeocoding] = useState(false);
+  const [geocodeResults, setGeocodeResults] = useState<Record<string, { kind: "ok" | "info" | "error"; text: string }>>({});
   const [notice, setNotice] = useState<{ kind: "ok" | "error" | "info"; text: string } | null>(null);
 
   const loadItems = useCallback(async () => {
@@ -120,14 +130,17 @@ function AdminPage() {
         const item = pendientes[index];
         setNotice({ kind: "info", text: `Buscando ubicación ${index + 1} de ${pendientes.length}: ${item.nombre}…` });
         if (index > 0) await new Promise(resolve => setTimeout(resolve, 1100));
-        const coords = await geolocalizarAporte(item);
+        const result = await geolocalizarAporte(item);
         revisados++;
-        if (coords) {
+        if (result.coordinates) {
           encontrados++;
           setEdits(current => ({
             ...current,
-            [item.id]: { ...(current[item.id] ?? { nombre: item.nombre, direccion: item.direccion ?? "", lat: "", lng: "" }), ...coords },
+            [item.id]: { ...(current[item.id] ?? { nombre: item.nombre, direccion: item.direccion ?? "", lat: "", lng: "" }), ...result.coordinates! },
           }));
+          setGeocodeResults(current => ({ ...current, [item.id]: { kind: "ok", text: result.message } }));
+        } else {
+          setGeocodeResults(current => ({ ...current, [item.id]: { kind: "info", text: result.message } }));
         }
       }
       setNotice({
@@ -200,7 +213,7 @@ function AdminPage() {
                 <div><label className="block text-xs font-semibold text-[#70695f]">Nombre</label><input value={edit.nombre} onChange={e=>updateEdit(item.id,{nombre:e.target.value})} className="mt-1 w-full rounded-lg border border-[#d8d0c4] px-3 py-2 text-sm"/></div>
                 <div><label className="block text-xs font-semibold text-[#70695f]">Precio aportado</label><div className="mt-1 rounded-lg bg-[#f7f4ef] px-3 py-2 text-sm">{item.rango_precio || "Pendiente"}</div></div>
                 <div className="sm:col-span-2"><label className="block text-xs font-semibold text-[#70695f]">Dirección (corrígela si hace falta)</label><input value={edit.direccion} onChange={e=>updateEdit(item.id,{direccion:e.target.value})} className="mt-1 w-full rounded-lg border border-[#d8d0c4] px-3 py-2 text-sm"/></div>
-                <div className="sm:col-span-2 rounded-xl bg-[#f8f5ef] p-4"><p className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[#70695f]"><MapPin size={14}/> Ubicación</p><p className="text-sm">{[item.pais,item.ciudad,item.zona].filter(Boolean).join(" → ") || "Sin ubicación completa"}</p><div className="mt-3 grid grid-cols-2 gap-3"><div><label className="block text-xs text-[#70695f]">Latitud</label><input inputMode="decimal" value={edit.lat} onChange={e=>updateEdit(item.id,{lat:e.target.value})} placeholder="Ej. 8.9824" className="mt-1 w-full rounded-lg border border-[#d8d0c4] bg-white px-3 py-2 text-sm"/></div><div><label className="block text-xs text-[#70695f]">Longitud</label><input inputMode="decimal" value={edit.lng} onChange={e=>updateEdit(item.id,{lng:e.target.value})} placeholder="Ej. -79.5347" className="mt-1 w-full rounded-lg border border-[#d8d0c4] bg-white px-3 py-2 text-sm"/></div></div>{(!edit.lat || !edit.lng) && <p className="mt-2 text-xs text-amber-800">Sin coordenadas, no aparecerá en el mapa. Puedes aprobarlo para recomendaciones por zona y completar la ubicación después.</p>}</div>
+                <div className="sm:col-span-2 rounded-xl bg-[#f8f5ef] p-4"><p className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[#70695f]"><MapPin size={14}/> Ubicación</p><p className="text-sm">{[item.pais,item.ciudad,item.zona].filter(Boolean).join(" → ") || "Sin ubicación completa"}</p>{geocodeResults[item.id] && <p className={`mb-2 rounded-lg px-3 py-2 text-xs ${geocodeResults[item.id].kind === "ok" ? "bg-emerald-50 text-emerald-800" : geocodeResults[item.id].kind === "error" ? "bg-red-50 text-red-800" : "bg-amber-50 text-amber-900"}`}>{geocodeResults[item.id].text}</p>}<div className="mt-3 grid grid-cols-2 gap-3"><div><label className="block text-xs text-[#70695f]">Latitud</label><input inputMode="decimal" value={edit.lat} onChange={e=>updateEdit(item.id,{lat:e.target.value})} placeholder="Ej. 8.9824" className="mt-1 w-full rounded-lg border border-[#d8d0c4] bg-white px-3 py-2 text-sm"/></div><div><label className="block text-xs text-[#70695f]">Longitud</label><input inputMode="decimal" value={edit.lng} onChange={e=>updateEdit(item.id,{lng:e.target.value})} placeholder="Ej. -79.5347" className="mt-1 w-full rounded-lg border border-[#d8d0c4] bg-white px-3 py-2 text-sm"/></div></div>{(!edit.lat || !edit.lng) && <p className="mt-2 text-xs text-amber-800">Sin coordenadas, no aparecerá en el mapa. Puedes aprobarlo para recomendaciones por zona y completar la ubicación después.</p>}</div>
                 <div><p className="text-xs font-semibold text-[#70695f]">Cocina</p><p className="mt-1 text-sm">{cuisines}</p></div><div><p className="text-xs font-semibold text-[#70695f]">Ambiente</p><p className="mt-1 text-sm">{environment}</p></div>
                 {item.contacto && <div><p className="text-xs font-semibold text-[#70695f]">Contacto</p><p className="mt-1 text-sm">{item.contacto}</p></div>}
                 {item.imagen && <div><p className="text-xs font-semibold text-[#70695f]">Imagen</p><a className="mt-1 block break-all text-sm underline" href={item.imagen} target="_blank" rel="noreferrer">Abrir imagen</a></div>}
