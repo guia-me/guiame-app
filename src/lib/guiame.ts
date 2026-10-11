@@ -283,7 +283,11 @@ export function coincideCocina(restaurante: string, buscada: string): boolean {
   };
   const opciones = grupos[b] ?? [b];
   const valores = a.split(/[\/;,|]+/).map(x => x.trim()).filter(Boolean);
-  return valores.some(valor => opciones.includes(valor));
+  // Acepta etiquetas compuestas como "Texas BBQ" o "Japanese Sushi" sin
+  // convertir la búsqueda en una coincidencia difusa entre cocinas distintas.
+  const coincideEtiqueta = (valor: string, opcion: string) =>
+    valor === opcion || valor.startsWith(opcion + " ") || valor.endsWith(" " + opcion) || valor.includes(" " + opcion + " ");
+  return valores.some(valor => opciones.some(opcion => coincideEtiqueta(valor, opcion)));
 }
 
 export function calcularMatch(r: Restaurante, c: Contexto): ResultadoMatch {
