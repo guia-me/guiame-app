@@ -79,7 +79,7 @@ function AdminPage() {
     setSendingLink(true); setNotice(null); setLinkSent(false);
     const { error } = await supabase.auth.signInWithOtp({
       email: ADMIN_EMAIL,
-      options: { emailRedirectTo: window.location.origin + "/admin", shouldCreateUser: true },
+      options: { emailRedirectTo: "https://guiame-app-navy.vercel.app/admin", shouldCreateUser: true },
     });
     setSendingLink(false);
     if (error) { setNotice({ kind: "error", text: "No pudimos enviar el enlace de acceso. Revisa la configuración de correo de Supabase." }); return; }
