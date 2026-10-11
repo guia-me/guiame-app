@@ -13,6 +13,11 @@ type Contribution = {
 type EditValues = { nombre: string; direccion: string; lat: string; lng: string };
 type AdminResponse = { contributions?: Contribution[]; error?: string; detail?: string; status?: string; restaurant?: { id: string; nombre: string }; coordinatesAvailable?: boolean };
 
+function hasCoordinates(lat: unknown, lng: unknown): boolean {
+  const valid = (value: unknown) => value !== null && value !== undefined && String(value).trim() !== "" && Number.isFinite(Number(value));
+  return valid(lat) && valid(lng);
+}
+
 async function geolocalizarAporte(item: Contribution): Promise<{ lat: string; lng: string } | null> {
   const query = [item.nombre, item.direccion, item.zona, item.ciudad, item.pais].filter(Boolean).join(", ");
   try {
@@ -114,7 +119,7 @@ function AdminPage() {
   };
 
   const geolocalizarPendientes = async () => {
-    const pendientes = items.filter(item => item.lat == null || item.lng == null);
+    const pendientes = items.filter(item => !hasCoordinates(item.lat, item.lng));
     if (pendientes.length === 0) {
       setNotice({ kind: "info", text: "Todos los aportes pendientes ya tienen coordenadas." });
       return;
@@ -187,7 +192,7 @@ function AdminPage() {
             <div className="flex items-center gap-3"><ShieldCheck size={19} className="text-emerald-700"/><div><p className="text-sm font-semibold">Sesión autorizada</p><p className="text-xs text-[#70695f]">{sessionEmail}</p></div></div>
             <button onClick={() => void loadItems()} disabled={loadingItems} className="inline-flex items-center gap-2 rounded-full border border-[#d8d0c4] px-3 py-2 text-xs font-semibold disabled:opacity-50"><RefreshCw size={13} className={loadingItems ? "animate-spin" : ""}/> Actualizar</button>
           </div>
-          <div className="mb-4 flex flex-wrap items-end justify-between gap-3"><div><h2 className="font-serif text-2xl">Pendientes</h2><p className="mt-1 text-sm text-[#70695f]">Revisa la ubicación y los duplicados antes de aprobar.</p><p className="mt-1 text-xs text-[#8a8379]">La búsqueda automática no usa tu ubicación personal; solo acepta coincidencias por nombre de restaurante.</p></div><div className="flex items-center gap-3"><button onClick={() => void geolocalizarPendientes()} disabled={batchGeocoding || loadingItems || !items.some(item => item.lat == null || item.lng == null)} className="inline-flex items-center gap-2 rounded-full border border-[#d8d0c4] bg-white px-3 py-2 text-xs font-semibold disabled:opacity-50"><MapPin size={13}/>{batchGeocoding ? "Buscando ubicaciones…" : "Geolocalizar pendientes"}</button><span className="rounded-full bg-[#e8dfd1] px-3 py-1 text-sm font-semibold tabular-nums">{items.length}</span></div></div>
+          <div className="mb-4 flex flex-wrap items-end justify-between gap-3"><div><h2 className="font-serif text-2xl">Pendientes</h2><p className="mt-1 text-sm text-[#70695f]">Revisa la ubicación y los duplicados antes de aprobar.</p><p className="mt-1 text-xs text-[#8a8379]">La búsqueda automática no usa tu ubicación personal; solo acepta coincidencias por nombre de restaurante.</p></div><div className="flex items-center gap-3"><button onClick={() => void geolocalizarPendientes()} disabled={batchGeocoding || loadingItems || !items.some(item => !hasCoordinates(item.lat, item.lng))} className="inline-flex items-center gap-2 rounded-full border border-[#d8d0c4] bg-white px-3 py-2 text-xs font-semibold disabled:opacity-50"><MapPin size={13}/>{batchGeocoding ? "Buscando ubicaciones…" : "Geolocalizar pendientes"}</button><span className="rounded-full bg-[#e8dfd1] px-3 py-1 text-sm font-semibold tabular-nums">{items.length}</span></div></div>
           {loadingItems && items.length === 0 ? <div className="rounded-xl bg-white p-8 text-sm text-[#70695f]">Cargando aportes…</div> : items.length === 0 ? <div className="rounded-xl border border-[#e1d9cd] bg-white p-8 text-center"><Check size={25} className="mx-auto text-emerald-700"/><h3 className="mt-3 font-serif text-xl">Todo al día</h3><p className="mt-2 text-sm text-[#70695f]">No hay restaurantes pendientes de revisión.</p></div> :
           <div className="space-y-5">{items.map(item => {
             const edit = edits[item.id] ?? { nombre: item.nombre, direccion: item.direccion ?? "", lat: item.lat == null ? "" : String(item.lat), lng: item.lng == null ? "" : String(item.lng) };
