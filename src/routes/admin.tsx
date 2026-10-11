@@ -19,29 +19,16 @@ function hasCoordinates(lat: unknown, lng: unknown): boolean {
 }
 
 async function geolocalizarAporte(item: Contribution): Promise<{ lat: string; lng: string } | null> {
-  const query = [item.nombre, item.direccion, item.zona, item.ciudad, item.pais].filter(Boolean).join(", ");
-  try {
-    const url = new URL("https://nominatim.openstreetmap.org/search");
-    url.searchParams.set("format", "jsonv2");
-    url.searchParams.set("limit", "5");
-    url.searchParams.set("q", query);
-    const response = await fetch(url.toString(), { headers: { Accept: "application/json" } });
-    if (!response.ok) return null;
-    const results = (await response.json()) as Array<{ lat?: string; lon?: string; name?: string; class?: string; type?: string; display_name?: string }>;
-    const venueTypes = new Set(["restaurant", "fast_food", "cafe", "bar", "pub", "food_court", "ice_cream", "bakery"]);
-    const normalize = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
-    const wanted = normalize(item.nombre);
-    const found = results.find((result) => {
-      const isFoodVenue = result.class === "amenity" && venueTypes.has(result.type ?? "");
-      const name = normalize(result.name ?? "");
-      const display = normalize(result.display_name ?? "");
-      const nameMatches = !!wanted && (name.includes(wanted) || wanted.includes(name) || display.includes(wanted));
-      return isFoodVenue && nameMatches && Number.isFinite(Number(result.lat)) && Number.isFinite(Number(result.lon));
-    });
-    return found ? { lat: String(found.lat), lng: String(found.lon) } : null;
-  } catch {
-    return null;
+  const { data, error } = await supabase.functions.invoke("guiame-admin-restaurants", {
+    body: { action: "geocode", aporteId: item.id },
+  });
+  if (error) throw new Error(error.message || "No se pudo consultar el servicio de geolocalización.");
+  if (data?.error) throw new Error(String(data.error));
+  if (!data?.lat || !data?.lng) return null;
+  if (!Number.isFinite(Number(data.lat)) || !Number.isFinite(Number(data.lng))) {
+    throw new Error("El servicio devolvió coordenadas inválidas.");
   }
+  return { lat: String(data.lat), lng: String(data.lng) };
 }
 
 export const Route = createFileRoute("/admin")({
