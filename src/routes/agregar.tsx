@@ -1,15 +1,67 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Campo, Chip, Shell } from "@/components/guiame/ui";
 import { AMBIENTES, COCINAS, CON_QUIEN, PRESUPUESTOS, anonId } from "@/lib/guiame";
 import { ciudadesQuery, paisesQuery, zonasQuery } from "@/lib/queries";
 
+type GeoResult = { lat: number; lng: number } | null;
+
+async function geolocalizarRestaurante(args: {
+  nombre: string;
+  direccion: string;
+  zona: string;
+  ciudad: string;
+  pais: string;
+}): Promise<GeoResult> {
+  // Never use the contributor's device location as the restaurant location.
+  // Only accept a named food venue from OpenStreetMap; otherwise leave it pending.
+  const q = [args.nombre, args.direccion, args.zona, args.ciudad, args.pais]
+    .filter(Boolean)
+    .join(", ");
+  try {
+    const url = new URL("https://nominatim.openstreetmap.org/search");
+    url.searchParams.set("format", "jsonv2");
+    url.searchParams.set("limit", "5");
+    url.searchParams.set("q", q);
+    const response = await fetch(url.toString(), { headers: { Accept: "application/json" } });
+    if (!response.ok) return null;
+    const results = (await response.json()) as Array<{
+      lat?: string;
+      lon?: string;
+      name?: string;
+      class?: string;
+      type?: string;
+      display_name?: string;
+    }>;
+    const foodVenueTypes = new Set([
+      "restaurant", "fast_food", "cafe", "bar", "pub", "food_court", "ice_cream", "bakery"
+    ]);
+    const normalize = (value: string) =>
+      value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+    const wantedName = normalize(args.nombre);
+    const match = results.find((item) => {
+      const namedVenue = item.class === "amenity" && foodVenueTypes.has(item.type ?? "");
+      const resultName = normalize(item.name ?? "");
+      const displayName = normalize(item.display_name ?? "");
+      const nameMatches =
+        !!wantedName &&
+        (resultName.includes(wantedName) ||
+          wantedName.includes(resultName) ||
+          displayName.includes(wantedName));
+      return namedVenue && nameMatches && Number.isFinite(Number(item.lat)) && Number.isFinite(Number(item.lon));
+    });
+    if (!match) return null;
+    return { lat: Number(match.lat), lng: Number(match.lon) };
+  } catch {
+    // Geocoding is best-effort; a failed lookup must not block the community contribution.
+    return null;
+  }
+}
+
 export const Route = createFileRoute("/agregar")({
-  // This route depends on client state (localStorage/geolocation) or interactive data fetching.
-  // Keep the initial request on the SSR shell and render the route on the browser.
+  // This route depends on client state or interactive data fetching.
   ssr: false,
   head: () => ({
     meta: [
@@ -42,9 +94,9 @@ function Agregar() {
   const [web, setWeb] = useState("");
   const [imagen, setImagen] = useState("");
   const [comentario, setComentario] = useState("");
-  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [enviando, setEnviando] = useState(false);
   const [enviado, setEnviado] = useState(false);
+  const [ubicacionResultado, setUbicacionResultado] = useState<"encontrada" | "pendiente" | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const paises = useQuery(paisesQuery);
@@ -56,19 +108,19 @@ function Agregar() {
 
   const puede = !!nombre.trim() && !!paisId && !!ciudadId && !!zonaId;
 
-  const ubicar = () => {
-    if (!("geolocation" in navigator)) return;
-    navigator.geolocation.getCurrentPosition(
-      (p) => setCoords({ lat: p.coords.latitude, lng: p.coords.longitude }),
-      () => setError("No pudimos obtener tu ubicación. Puedes continuar sin ella."),
-      { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 },
-    );
-  };
-
   const enviar = async () => {
     if (!puede) return;
     setEnviando(true);
     setError(null);
+
+    const coords = await geolocalizarRestaurante({
+      nombre: nombre.trim(),
+      direccion: direccion.trim(),
+      zona: zonaNombre ?? "",
+      ciudad: ciudadNombre ?? "",
+      pais: paisNombre ?? "",
+    });
+    setUbicacionResultado(coords ? "encontrada" : "pendiente");
 
     const rango = PRESUPUESTOS.find((p) => p.label === presupuesto);
     const { error: e } = await supabase.from("aportes_restaurantes").insert({
@@ -98,6 +150,7 @@ function Agregar() {
         comentario: comentario.trim() || null,
         precio_min: rango?.min ?? null,
         precio_max: rango?.max ?? null,
+        geolocalizacion: coords ? "automatica" : "pendiente",
       },
     });
 
@@ -118,6 +171,11 @@ function Agregar() {
           <p className="mt-3 text-sm text-muted-foreground">
             Quedará pendiente de verificación antes de aparecer en las recomendaciones.
           </p>
+          <p className="mt-3 text-sm text-muted-foreground">
+            {ubicacionResultado === "encontrada"
+              ? "Encontramos una ubicación del restaurante automáticamente."
+              : "No pudimos confirmar su ubicación automáticamente. El equipo podrá completarla después."}
+          </p>
           <button
             type="button"
             onClick={() => window.location.assign("/")}
@@ -133,7 +191,7 @@ function Agregar() {
   return (
     <Shell
       titulo="Agregar un restaurante"
-      subtitulo="La comunidad puede proponer lugares de cualquier ciudad. Primero los verificamos; después entran al motor de MATCH."
+      subtitulo="La comunidad puede proponer lugares de cualquier ciudad. Intentaremos localizar el restaurante automáticamente; primero verificamos cada aporte."
     >
       <div className="divide-y divide-border">
         <section className="py-5">
@@ -190,7 +248,7 @@ function Agregar() {
         )}
 
         <section className="py-5">
-          <p className="eyebrow">Dirección</p>
+          <p className="eyebrow">Dirección (opcional, ayuda a encontrarlo)</p>
           <input className="field mt-3" value={direccion} onChange={(e) => setDireccion(e.target.value)} />
         </section>
 
@@ -226,13 +284,6 @@ function Agregar() {
           ))}
         </Campo>
 
-        <Campo label="Ubicación">
-          <Chip activo={!!coords} onClick={ubicar}>
-            <MapPin size={14} className="mr-1.5" />
-            {coords ? "Ubicación tomada" : "Usar mi ubicación actual"}
-          </Chip>
-        </Campo>
-
         <section className="py-5">
           <p className="eyebrow">Teléfono</p>
           <input className="field mt-3" value={telefono} onChange={(e) => setTelefono(e.target.value)} />
@@ -262,7 +313,7 @@ function Agregar() {
           disabled={!puede || enviando}
           className="btn-primary w-full disabled:opacity-40"
         >
-          {enviando ? "Enviando…" : "Enviar restaurante"}
+          {enviando ? "Buscando ubicación y enviando…" : "Enviar restaurante"}
         </button>
       </div>
     </Shell>
