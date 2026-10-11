@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Check, Clock, LogOut, Mail, MapPin, RefreshCw, ShieldCheck, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
-const ADMIN_EMAIL = "guiame2026@gmail.com";
+const ADMIN_EMAIL = "matiascocinpanama@gmail.com";
 type Contribution = {
   id: string; nombre: string; pais: string | null; ciudad: string | null; zona: string | null;
   direccion: string | null; tipo_cocina: string | null; rango_precio: string | null; ambiente: string | null;
