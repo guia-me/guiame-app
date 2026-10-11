@@ -125,27 +125,35 @@ function AdminPage() {
       return;
     }
     setBatchGeocoding(true);
-    setNotice({ kind: "info", text: `Buscando ubicación automática para ${pendientes.length} aportes. Puedes dejar esta pestaña abierta.` });
+    setNotice({ kind: "info", text: `Iniciando búsqueda de ubicación para ${pendientes.length} aportes…` });
     let encontrados = 0;
-    for (let index = 0; index < pendientes.length; index++) {
-      const item = pendientes[index];
-      if (index > 0) await new Promise(resolve => setTimeout(resolve, 1100));
-      const coords = await geolocalizarAporte(item);
-      if (coords) {
-        encontrados++;
-        setEdits(current => ({
-          ...current,
-          [item.id]: { ...(current[item.id] ?? { nombre: item.nombre, direccion: item.direccion ?? "", lat: "", lng: "" }), ...coords },
-        }));
+    let revisados = 0;
+    try {
+      for (let index = 0; index < pendientes.length; index++) {
+        const item = pendientes[index];
+        setNotice({ kind: "info", text: `Buscando ubicación ${index + 1} de ${pendientes.length}: ${item.nombre}…` });
+        if (index > 0) await new Promise(resolve => setTimeout(resolve, 1100));
+        const coords = await geolocalizarAporte(item);
+        revisados++;
+        if (coords) {
+          encontrados++;
+          setEdits(current => ({
+            ...current,
+            [item.id]: { ...(current[item.id] ?? { nombre: item.nombre, direccion: item.direccion ?? "", lat: "", lng: "" }), ...coords },
+          }));
+        }
       }
+      setNotice({
+        kind: encontrados > 0 ? "ok" : "info",
+        text: encontrados > 0
+          ? `Encontramos coordenadas para ${encontrados} de ${pendientes.length} aportes. Revisa los resultados y pulsa “Aprobar e incorporar” para guardar cada ficha; los demás quedan sin coordenadas.`
+          : `La búsqueda terminó: no encontramos ubicaciones suficientemente fiables para ${revisados} aportes. No se inventaron coordenadas; revisa el nombre o añade una dirección.`,
+      });
+    } catch (error) {
+      setNotice({ kind: "error", text: `La búsqueda se interrumpió: ${error instanceof Error ? error.message : "error inesperado"}. Actualiza la página e inténtalo de nuevo.` });
+    } finally {
+      setBatchGeocoding(false);
     }
-    setBatchGeocoding(false);
-    setNotice({
-      kind: encontrados > 0 ? "ok" : "info",
-      text: encontrados > 0
-        ? `Encontramos coordenadas para ${encontrados} de ${pendientes.length} aportes. Revisa los resultados y pulsa “Aprobar e incorporar” para guardar cada ficha; los demás quedan sin coordenadas.`
-        : `No encontramos ubicaciones suficientemente fiables para estos ${pendientes.length} aportes. No se inventaron coordenadas; puedes revisar dirección y nombre.`,
-    });
   };
 
   const updateEdit = (id: string, patch: Partial<EditValues>) => setEdits(current => ({
@@ -192,7 +200,7 @@ function AdminPage() {
             <div className="flex items-center gap-3"><ShieldCheck size={19} className="text-emerald-700"/><div><p className="text-sm font-semibold">Sesión autorizada</p><p className="text-xs text-[#70695f]">{sessionEmail}</p></div></div>
             <button onClick={() => void loadItems()} disabled={loadingItems} className="inline-flex items-center gap-2 rounded-full border border-[#d8d0c4] px-3 py-2 text-xs font-semibold disabled:opacity-50"><RefreshCw size={13} className={loadingItems ? "animate-spin" : ""}/> Actualizar</button>
           </div>
-          <div className="mb-4 flex flex-wrap items-end justify-between gap-3"><div><h2 className="font-serif text-2xl">Pendientes</h2><p className="mt-1 text-sm text-[#70695f]">Revisa la ubicación y los duplicados antes de aprobar.</p><p className="mt-1 text-xs text-[#8a8379]">La búsqueda automática no usa tu ubicación personal; solo acepta coincidencias por nombre de restaurante.</p></div><div className="flex items-center gap-3"><button onClick={() => void geolocalizarPendientes()} disabled={batchGeocoding || loadingItems || !items.some(item => !hasCoordinates(item.lat, item.lng))} className="inline-flex items-center gap-2 rounded-full border border-[#d8d0c4] bg-white px-3 py-2 text-xs font-semibold disabled:opacity-50"><MapPin size={13}/>{batchGeocoding ? "Buscando ubicaciones…" : "Geolocalizar pendientes"}</button><span className="rounded-full bg-[#e8dfd1] px-3 py-1 text-sm font-semibold tabular-nums">{items.length}</span></div></div>
+          <div className="mb-4 flex flex-wrap items-end justify-between gap-3"><div><h2 className="font-serif text-2xl">Pendientes</h2><p className="mt-1 text-sm text-[#70695f]">Revisa la ubicación y los duplicados antes de aprobar.</p><p className="mt-1 text-xs text-[#8a8379]">La búsqueda automática no usa tu ubicación personal; solo acepta coincidencias por nombre de restaurante.</p></div><div className="flex items-center gap-3"><button onClick={() => void geolocalizarPendientes()} disabled={batchGeocoding || loadingItems || items.length === 0} className="inline-flex items-center gap-2 rounded-full border border-[#d8d0c4] bg-white px-3 py-2 text-xs font-semibold disabled:opacity-50"><MapPin size={13}/>{batchGeocoding ? "Buscando ubicaciones…" : "Geolocalizar pendientes"}</button><span className="rounded-full bg-[#e8dfd1] px-3 py-1 text-sm font-semibold tabular-nums">{items.length}</span></div></div>
           {loadingItems && items.length === 0 ? <div className="rounded-xl bg-white p-8 text-sm text-[#70695f]">Cargando aportes…</div> : items.length === 0 ? <div className="rounded-xl border border-[#e1d9cd] bg-white p-8 text-center"><Check size={25} className="mx-auto text-emerald-700"/><h3 className="mt-3 font-serif text-xl">Todo al día</h3><p className="mt-2 text-sm text-[#70695f]">No hay restaurantes pendientes de revisión.</p></div> :
           <div className="space-y-5">{items.map(item => {
             const edit = edits[item.id] ?? { nombre: item.nombre, direccion: item.direccion ?? "", lat: item.lat == null ? "" : String(item.lat), lng: item.lng == null ? "" : String(item.lng) };
