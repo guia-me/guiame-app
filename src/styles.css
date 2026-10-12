@@ -732,3 +732,25 @@ body{background:var(--gm-cream);color:var(--gm-ink)}
 /* GUÍA·ME: grupos de marcadores del mapa, en la paleta de la marca */
 .marker-cluster-small,.marker-cluster-medium,.marker-cluster-large{background:rgba(208,165,72,.28)!important}
 .marker-cluster-small div,.marker-cluster-medium div,.marker-cluster-large div{background:#1a1a17!important;color:#fff!important;border:2px solid #d0a548;box-sizing:border-box;font-family:inherit;font-weight:700}
+
+
+/* GUÍA·ME MASTER polish — clearer location controls and evaluation form */
+.gm-mode-grid{gap:1px;background:var(--gm-line);border-color:var(--gm-line)}
+.gm-mode-btn{padding:0 8px;line-height:1.35;transition:background .18s,color .18s}
+.gm-mode-btn:focus-visible,.gm-location-card button:focus-visible,.gm-chip:focus-visible,.gm-primary:focus-visible{outline:2px solid var(--gm-gold);outline-offset:2px}
+.gm-location-card button{max-width:130px;text-align:right;line-height:1.4;cursor:pointer}
+.gm-filter-section{scroll-margin-top:82px}
+.gm-chip{transition:background .16s,border-color .16s,color .16s}
+.gm-chip:hover{border-color:var(--gm-gold)}
+.gm-primary{cursor:pointer;transition:transform .16s,background .16s}
+.gm-primary:not(:disabled):hover{background:#26332a;transform:translateY(-1px)}
+.gm-evaluation-form{margin:12px 14px 0;padding:0 15px 16px;background:var(--gm-paper);border:1px solid var(--gm-line);border-radius:14px;box-shadow:0 8px 24px rgba(35,31,24,.045)}
+.gm-evaluation-form>section{padding:18px 0;border-bottom:1px solid #e8e1d6}
+.gm-evaluation-form>section:last-child{border-bottom:0}
+.gm-evaluation-form .gm-filter-section{padding:17px 0}
+.gm-evaluation-form .eyebrow,.gm-evaluation-form .gm-label{color:var(--gm-green)}
+.gm-evaluation-form input[type="range"]{display:block;width:100%;height:5px;accent-color:var(--gm-gold);cursor:pointer}
+.gm-evaluation-form input:not([type="range"]),.gm-evaluation-form textarea{width:100%;padding:12px 13px;border:1px solid var(--gm-line);border-radius:8px;background:#fff;color:var(--gm-ink);font:inherit;font-size:13px}
+.gm-evaluation-form textarea{min-height:104px;resize:vertical}
+.gm-evaluation-form input:focus,.gm-evaluation-form textarea:focus{outline:2px solid rgba(164,125,53,.25);border-color:var(--gm-gold)}
+@media(max-width:380px){.gm-mode-btn{font-size:8px;letter-spacing:.02em}.gm-home-panel{margin-left:9px;margin-right:9px;padding-left:12px;padding-right:12px}.gm-evaluation-form{margin-left:9px;margin-right:9px;padding-left:12px;padding-right:12px}}
