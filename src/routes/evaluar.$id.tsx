@@ -79,7 +79,7 @@ function Evaluar() {
 
   return (
     <Shell titulo="Tu evaluación" subtitulo={r?.nombre}>
-      <div className="divide-y divide-border">
+      <div className="gm-evaluation-form">
         <Escala label="Food" valor={food} onChange={setFood} />
         <Escala label="Decor" valor={decor} onChange={setDecor} />
         <Escala label="Service" valor={service} onChange={setService} />
