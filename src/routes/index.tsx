@@ -139,22 +139,28 @@ function Inicio() {
               {c.usarUbicacion ? "Buscando cerca de ti" : c.ciudadNombre ? c.ciudadNombre : "Selecciona una zona"}
             </small>
           </div>
-          <button type="button" onClick={() => setMostrarUbicacion(v => !v)}>
-            {mostrarUbicacion ? "CERRAR" : "CAMBIAR"}
+          <button type="button" onClick={() => {
+            if (modo !== "zona") {
+              elegirZona();
+            } else {
+              setMostrarUbicacion(v => !v);
+            }
+          }}>
+            {modo !== "zona" ? "CAMBIAR UBICACIÓN" : mostrarUbicacion ? "OCULTAR ZONAS" : "CAMBIAR ZONA"}
           </button>
         </div>
 
         <div className="gm-mode-grid">
           <button type="button" className={modo === "zona" ? "gm-mode-btn active" : "gm-mode-btn"} onClick={elegirZona}>
-            ZONA
+            BUSCAR EN TU ZONA
           </button>
           <button type="button" className={modo === "ubicacion" ? "gm-mode-btn active" : "gm-mode-btn"} onClick={usarUbicacion}>
             <Navigation size={12} style={{verticalAlign:"-2px",marginRight:4}} />
-            MI UBICACIÓN
+            USAR MI UBICACIÓN
           </button>
         </div>
 
-        {(mostrarUbicacion || modo === "zona") && (
+        {(mostrarUbicacion && modo === "zona") && (
           <div>
             <Campo label="País">
               {paises.map(p => (
