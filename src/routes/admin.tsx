@@ -161,19 +161,53 @@ function AdminPage() {
   }));
 
   const act = async (item: Contribution, action: "approve" | "reject") => {
-    setBusyId(item.id); setNotice(null);
+    setBusyId(item.id);
+    setNotice(null);
     const edit = edits[item.id] ?? { nombre: item.nombre, direccion: item.direccion ?? "", lat: "", lng: "" };
     const body: Record<string, unknown> = { action, aporteId: item.id };
-    if (action === "approve") { body.nombre = edit.nombre; body.direccion = edit.direccion; body.lat = edit.lat; body.lng = edit.lng; }
-    const { data, error } = await supabase.functions.invoke("guiame-admin-restaurants", { body });
-    setBusyId(null);
-    if (error) { setNotice({ kind: "error", text: "No se completó la acción. El aporte sigue en revisión; actualiza la lista antes de reintentar." }); return; }
-    const response = data as AdminResponse;
-    if (response.error) { setNotice({ kind: "error", text: response.detail ? response.error + " " + response.detail : response.error }); return; }
-    setItems(current => current.filter(x => x.id !== item.id));
-    if (action === "approve" && response.coordinatesAvailable === false) setNotice({ kind: "info", text: "Restaurante incorporado al catálogo, pero sin coordenadas: aparecerá en recomendaciones por zona, no en el mapa hasta completar la ubicación." });
-    else if (action === "approve") setNotice({ kind: "ok", text: "Restaurante aprobado e incorporado al catálogo de GUÍA·ME." });
-    else setNotice({ kind: "ok", text: "Aporte rechazado; no se incorporó al catálogo." });
+    if (action === "approve") {
+      body.nombre = edit.nombre;
+      body.direccion = edit.direccion;
+      body.lat = edit.lat;
+      body.lng = edit.lng;
+    }
+    try {
+      const { data, error } = await supabase.functions.invoke("guiame-admin-restaurants", { body });
+      if (error) {
+        let detail = "";
+        try {
+          const context = (error as { context?: Response }).context;
+          if (context && typeof context.json === "function") {
+            const payload = await context.clone().json();
+            detail = typeof payload?.error === "string" ? payload.error : typeof payload?.message === "string" ? payload.message : "";
+            if (typeof payload?.detail === "string") detail += (detail ? " " : "") + payload.detail;
+          }
+        } catch { /* Keep the safe fallback below if the response is not JSON. */ }
+        setNotice({
+          kind: "error",
+          text: detail || (error.message
+            ? `No se completó la acción: ${error.message}. El aporte sigue en revisión; no vuelvas a pulsar hasta revisar el mensaje.`
+            : "No se completó la acción por un error de comunicación. El aporte sigue en revisión; actualiza la lista antes de reintentar."),
+        });
+        return;
+      }
+      const response = data as AdminResponse;
+      if (!response || response.error) {
+        setNotice({ kind: "error", text: response?.detail ? `${response.error} ${response.detail}` : response?.error || "El servidor no devolvió confirmación. El aporte sigue en revisión; comprueba su estado antes de reintentar." });
+        return;
+      }
+      setItems(current => current.filter(x => x.id !== item.id));
+      if (action === "approve" && response.coordinatesAvailable === false) setNotice({ kind: "info", text: "Restaurante incorporado al catálogo, pero sin coordenadas: aparecerá en recomendaciones por zona, no en el mapa hasta completar la ubicación." });
+      else if (action === "approve") setNotice({ kind: "ok", text: "Restaurante aprobado e incorporado al catálogo de GUÍA·ME." });
+      else setNotice({ kind: "ok", text: "Aporte rechazado; no se incorporó al catálogo." });
+    } catch (error) {
+      setNotice({
+        kind: "error",
+        text: `No se pudo completar la acción: ${error instanceof Error ? error.message : String(error)}. No se ha confirmado ningún cambio; revisa el estado del aporte antes de volver a intentarlo.`,
+      });
+    } finally {
+      setBusyId(null);
+    }
   };
 
   const signOut = async () => { await supabase.auth.signOut(); setSessionEmail(null); setItems([]); };
