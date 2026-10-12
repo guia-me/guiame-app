@@ -3,14 +3,12 @@ import { Heart, Home, Map, Plus, Star, ArrowRight, MapPin } from "lucide-react";
 import type { ReactNode } from "react";
 import { ETIQUETA_ESTADO, rangoPrecio, type EstadoInfo, type Restaurante } from "@/lib/guiame";
 
-const FALLBACK_IMAGES = [
-  "https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?auto=format&fit=crop&w=900&q=82",
-  "https://images.unsplash.com/photo-1566889110088-1119b49ce526?auto=format&fit=crop&w=900&q=82",
-  "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=900&q=82",
-];
+// Placeholder editorial: no sustituir una foto real por una imagen genérica de comida.
+const NO_PHOTO_IMAGE =
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 900 600'%3E%3Crect width='900' height='600' fill='%23f2eee4'/%3E%3Ccircle cx='450' cy='265' r='118' fill='none' stroke='%23c5a45f' stroke-width='4'/%3E%3Ccircle cx='450' cy='265' r='91' fill='none' stroke='%23c5a45f' stroke-width='2'/%3E%3Cpath d='M400 265h100M450 215v100' stroke='%2368725b' stroke-width='2'/%3E%3Ctext x='450' y='445' font-family='Georgia,serif' font-size='25' letter-spacing='5' text-anchor='middle' fill='%2312191b'%3EGU%C3%8DA%C2%B7ME%3C/text%3E%3Ctext x='450' y='482' font-family='Arial,sans-serif' font-size='15' letter-spacing='3' text-anchor='middle' fill='%236e6a61'%3EFOTOGRAF%C3%8DA PENDIENTE%3C/text%3E%3C/svg%3E";
 
-export function imagenRestaurante(r: Restaurante, index = 0) {
-  return r.imagen_url || FALLBACK_IMAGES[index % FALLBACK_IMAGES.length];
+export function imagenRestaurante(r: Restaurante, _index = 0) {
+  return r.imagen_url || NO_PHOTO_IMAGE;
 }
 
 export function Marca() {
