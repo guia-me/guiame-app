@@ -132,8 +132,8 @@ export function Zagat({ r }: { r: Restaurante }) {
   const item = (label: string, value: number | null) => (
     <div>
       <span>{label}</span>
-      <strong>{value != null ? value : "—"}</strong>
-      <small>{value != null ? "/30" : ""}</small>
+      <strong>{value != null ? value : "Pendiente"}</strong>
+      <small>{value != null ? "/30" : "Sin evaluaciones"}</small>
     </div>
   );
   return (
