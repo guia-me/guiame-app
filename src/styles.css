@@ -891,3 +891,21 @@ body:has(.admin-page),body:has([data-admin-page]){background:var(--gm-cream)}
  .gm-summary-pill{align-self:flex-start}
  .gm-card-photo{height:135px}
 }
+
+
+/* Ficha restaurante: pestañas interactivas y precio en la misma línea de valoración */
+.gm-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;background:var(--gm-paper);border-bottom:1px solid var(--gm-line)}
+.gm-tab{position:relative;display:flex;justify-content:center;align-items:center;min-height:48px;padding:10px 5px;border:0;border-bottom:2px solid transparent;background:transparent;color:var(--gm-muted);font:600 11px "DM Sans",sans-serif;cursor:pointer}
+.gm-tab.active{border-bottom-color:var(--gm-gold);color:var(--gm-ink)}
+.gm-tab:focus-visible{outline:2px solid var(--gm-gold);outline-offset:-3px}
+.gm-score-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}
+.gm-score-grid>div{min-width:0}
+.gm-score-grid span{font-size:8px;line-height:1.25}
+.gm-score-grid strong{font-size:14px;overflow-wrap:anywhere}
+.gm-score-grid small{font-size:7px;line-height:1.25}
+.gm-price-score{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:0 3px;border-left:1px solid var(--gm-line);min-width:0;text-align:center}
+.gm-price-score span{font-size:8px;line-height:1.2;color:var(--gm-muted)}
+.gm-price-score strong{font:600 11px "DM Sans",sans-serif;color:var(--gm-green);overflow-wrap:anywhere}
+.gm-price-score small{font-size:7px;color:var(--gm-muted)}
+.gm-review-quote{margin:12px 0;padding:14px;border-left:3px solid var(--gm-gold);background:#f7f2e8;font:italic 16px/1.5 "Playfair Display",Georgia,serif}
+@media(max-width:360px){.gm-score-grid{gap:2px}.gm-score-grid span{font-size:7px}.gm-score-grid strong{font-size:12px}.gm-price-score strong{font-size:9px}}
