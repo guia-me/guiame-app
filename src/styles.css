@@ -862,3 +862,32 @@ body:has(.admin-page),body:has([data-admin-page]){background:var(--gm-cream)}
  .gm-chip{padding:7px 9px;font-size:10px}
  .gm-score-grid{gap:4px}
 }
+
+
+/* Resultados: acercamiento al MASTER móvil (ficha editorial con imagen protagonista) */
+.gm-results{padding-top:2px}
+.gm-results-summary{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;padding:8px 2px 13px;border-bottom:1px solid var(--gm-line);margin-bottom:13px}
+.gm-results-summary h1{font:500 clamp(29px,7vw,38px)/1.03 "Playfair Display",Georgia,serif;letter-spacing:-.025em;margin:0 0 9px}
+.gm-results-summary p{font-size:10px;line-height:1.5;color:var(--gm-muted);margin:0}
+.gm-summary-pill{flex-shrink:0;border:1px solid var(--gm-line);background:#f6f0e5;border-radius:999px;padding:8px 10px;font-size:9px;color:#5c564b;white-space:nowrap}
+.gm-result-list{display:grid;gap:12px}
+.gm-result-list>div{min-width:0}
+.gm-result-card{margin:0;border-radius:12px;box-shadow:0 4px 15px rgba(35,31,24,.07)}
+.gm-card-photo{height:150px}
+.gm-card-photo img{object-position:center 50%}
+.gm-card-body{padding:12px 13px 10px}
+.gm-card-title-row h2{font-size:23px}
+.gm-card-meta{font-size:10px;line-height:1.45}
+.gm-score-grid{margin:10px 0;padding:10px 0;gap:6px}
+.gm-score-grid>div{align-items:center;text-align:center;min-width:0}
+.gm-score-grid span{font-size:9px}
+.gm-score-grid strong{font:500 15px "Playfair Display",Georgia,serif}
+.gm-score-grid small{font-size:7px;line-height:1.25}
+.gm-card-footer{padding-top:1px}
+.gm-result-list .gm-status{font-size:8px}
+.gm-results>.gm-secondary,.gm-results>a.gm-secondary{min-height:44px;border-radius:999px!important;background:var(--gm-ink);color:var(--gm-paper);font-size:9px;letter-spacing:.1em}
+@media(max-width:380px){
+ .gm-results-summary{align-items:flex-start;flex-direction:column}
+ .gm-summary-pill{align-self:flex-start}
+ .gm-card-photo{height:135px}
+}
