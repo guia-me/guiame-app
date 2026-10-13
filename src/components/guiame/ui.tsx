@@ -141,6 +141,7 @@ export function Zagat({ r }: { r: Restaurante }) {
       {item("Comida", r.food_avg)}
       {item("Decoración", r.decor_avg)}
       {item("Servicio", r.service_avg)}
+      <div className="gm-price-score"><span>Precio por persona</span><strong>{rangoPrecio(r)}</strong><small>rango estimado</small></div>
     </div>
   );
 }
