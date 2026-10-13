@@ -49,10 +49,13 @@ function Evaluar() {
   const [comentario, setComentario] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [exito, setExito] = useState(false);
 
   const enviar = async () => {
+    if (enviando) return;
     setEnviando(true);
     setError(null);
+    setExito(false);
     const { error: e } = await supabase.from("evaluaciones").insert({
       restaurante_id: id,
       anon_id: anonId(),
@@ -74,7 +77,7 @@ function Evaluar() {
       setError("No pudimos guardar tu evaluación. Intenta de nuevo.");
       return;
     }
-    navigate({ to: "/restaurante/$id", params: { id } });
+    setExito(true);
   };
 
   return (
@@ -156,10 +159,27 @@ function Evaluar() {
       </div>
 
       <div className="py-8">
-        {error && <p className="mb-3 text-sm text-destructive">{error}</p>}
-        <button type="button" onClick={enviar} disabled={enviando} className="btn-primary w-full disabled:opacity-40">
-          {enviando ? "Guardando…" : "Enviar evaluación"}
-        </button>
+        {error && <p role="alert" className="mb-3 text-sm text-destructive">{error}</p>}
+        {exito && (
+          <div role="status" aria-live="polite" className="mb-4 rounded-xl border border-[var(--gold)] bg-[var(--gold)]/10 p-4">
+            <p className="serif text-xl">¡Evaluación guardada!</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Gracias por ayudar a la comunidad GUÍA·ME. Tu aporte quedó registrado.
+            </p>
+            <button
+              type="button"
+              onClick={() => navigate({ to: "/restaurante/$id", params: { id } })}
+              className="btn-primary mt-4 w-full"
+            >
+              Volver a la ficha
+            </button>
+          </div>
+        )}
+        {!exito && (
+          <button type="button" onClick={enviar} disabled={enviando} className="btn-primary w-full disabled:opacity-40">
+            {enviando ? "Guardando…" : "Enviar evaluación"}
+          </button>
+        )}
       </div>
     </Shell>
   );
