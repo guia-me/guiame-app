@@ -89,8 +89,8 @@ function Evaluar() {
         <section className="mx-auto my-8 max-w-md overflow-hidden rounded-2xl border border-[var(--gold)]/40 bg-[#fbf8f1] text-[#1d2825] shadow-sm">
           <div className="h-1 w-full bg-[var(--gold)]" />
           <div className="px-6 py-9 text-center sm:px-9 sm:py-12">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-[var(--gold)]/50 bg-white">
-              <span aria-hidden="true" className="serif text-3xl text-[var(--gold)]">✓</span>
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-[#c5a96b] bg-white shadow-[0_4px_18px_rgba(38,59,50,0.10)]">
+              <span aria-hidden="true" className="serif text-3xl text-[#a88a4d]">✓</span>
             </div>
             <p className="mt-7 text-xs font-medium uppercase tracking-[0.24em] text-[#77715f]">
               GUÍA·ME · COMUNIDAD
@@ -108,10 +108,11 @@ function Evaluar() {
             <button
               type="button"
               onClick={() => navigate({ to: "/restaurante/$id", params: { id } })}
-              className="group relative mt-8 inline-flex min-h-14 w-full items-center justify-center gap-3 overflow-hidden rounded-full border border-[#c5a96b] bg-gradient-to-r from-[#263b32] via-[#314d40] to-[#263b32] px-6 py-3 text-sm font-semibold uppercase tracking-[0.16em] text-[#fffaf0] shadow-[0_8px_24px_rgba(38,59,50,0.2)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_12px_28px_rgba(38,59,50,0.3)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--gold)] active:translate-y-0"
+              className="group relative mt-8 inline-flex min-h-14 w-full items-center justify-center gap-3 rounded-full border-2 border-[#c5a96b] bg-[#263b32] px-6 py-3 text-sm font-semibold uppercase tracking-[0.12em] text-[#fffaf0] shadow-lg transition duration-300 hover:bg-[#314d40] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#c5a96b]" style={{ appearance: "none", WebkitAppearance: "none", backgroundColor: "#263b32", color: "#fffaf0", border: "2px solid #c5a96b", borderRadius: "9999px", minHeight: "56px", width: "100%", fontWeight: 600, letterSpacing: "0.12em", boxShadow: "0 8px 24px rgba(38,59,50,0.22)", cursor: "pointer" }}
             >
-              Volver a la ficha
-              <span aria-hidden="true">→</span>
+              <span aria-hidden="true" className="text-[#e3c985]">✦</span>
+              Volver a mi MATCH
+              <span aria-hidden="true" className="text-lg text-[#e3c985]">→</span>
             </button>
             <p className="mt-4 text-xs tracking-wide text-[#77715f]">
               GRACIAS POR SER PARTE DE GUÍA·ME
