@@ -81,106 +81,129 @@ function Evaluar() {
   };
 
   return (
-    <Shell titulo="Tu evaluación" subtitulo={r?.nombre}>
-      <div className="gm-evaluation-form">
-        <Escala label="Food" valor={food} onChange={setFood} />
-        <Escala label="Decor" valor={decor} onChange={setDecor} />
-        <Escala label="Service" valor={service} onChange={setService} />
-        <Escala label="Cost" valor={cost} onChange={setCost} />
-
-        <Campo label="Ambiente">
-          {AMBIENTES.map((x) => (
-            <Chip key={x} activo={ambiente === x} onClick={() => setAmbiente(x)}>
-              {x}
-            </Chip>
-          ))}
-        </Campo>
-
-        <Campo label="Con quién fuiste">
-          {CON_QUIEN.map((x) => (
-            <Chip key={x} activo={conQuien === x} onClick={() => setConQuien(x)}>
-              {x}
-            </Chip>
-          ))}
-        </Campo>
-
-        <Campo label="Cuántas personas">
-          {PERSONAS.map((x) => (
-            <Chip key={x} activo={personas === x} onClick={() => setPersonas(x)}>
-              {x}
-            </Chip>
-          ))}
-        </Campo>
-
-        <Campo label="Presupuesto por persona">
-          {PRESUPUESTOS.map((p) => (
-            <Chip key={p.label} activo={presupuesto === p.label} onClick={() => setPresupuesto(p.label)}>
-              {p.label}
-            </Chip>
-          ))}
-        </Campo>
-
-        <Campo label="¿Volverías?">
-          {(["si", "no", "tal_vez"] as const).map((v) => (
-            <Chip key={v} activo={volveria === v} onClick={() => setVolveria(v)}>
-              {v === "si" ? "Sí" : v === "no" ? "No" : "Tal vez"}
-            </Chip>
-          ))}
-        </Campo>
-
-        <Campo label="¿Lo recomendarías?">
-          <Chip activo={recomendaria === true} onClick={() => setRecomendaria(true)}>
-            Sí
-          </Chip>
-          <Chip activo={recomendaria === false} onClick={() => setRecomendaria(false)}>
-            No
-          </Chip>
-        </Campo>
-
-        <section className="py-5">
-          <p className="eyebrow">Plato recomendado</p>
-          <input
-            className="field mt-3"
-            value={plato}
-            onChange={(e) => setPlato(e.target.value)}
-            placeholder="Ej. carimañolas"
-          />
-        </section>
-
-        <section className="py-5">
-          <p className="eyebrow">Comentario</p>
-          <textarea
-            className="field mt-3 min-h-24"
-            value={comentario}
-            onChange={(e) => setComentario(e.target.value)}
-            placeholder="¿Cómo fue tu experiencia?"
-          />
-        </section>
-      </div>
-
-      <div className="py-8">
-        {error && <p role="alert" className="mb-3 text-sm text-destructive">{error}</p>}
-        {exito && (
-          <div role="status" aria-live="polite" className="mb-4 rounded-xl border border-[var(--gold)] bg-[var(--gold)]/10 p-4">
-            <p className="serif text-xl">¡Evaluación guardada!</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Gracias por ayudar a la comunidad GUÍA·ME. Tu aporte quedó registrado.
+    <Shell
+      titulo={exito ? "Gracias por compartir" : "Tu evaluación"}
+      subtitulo={exito ? r?.nombre : r?.nombre}
+    >
+      {exito ? (
+        <section className="mx-auto my-8 max-w-md overflow-hidden rounded-2xl border border-[var(--gold)]/40 bg-[#fbf8f1] text-[#1d2825] shadow-sm">
+          <div className="h-1 w-full bg-[var(--gold)]" />
+          <div className="px-6 py-9 text-center sm:px-9 sm:py-12">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-[var(--gold)]/50 bg-white">
+              <span aria-hidden="true" className="serif text-3xl text-[var(--gold)]">✓</span>
+            </div>
+            <p className="mt-7 text-xs font-medium uppercase tracking-[0.24em] text-[#77715f]">
+              GUÍA·ME · COMUNIDAD
             </p>
+            <h2 className="serif mt-3 text-3xl leading-tight sm:text-4xl">
+              Tu experiencia cuenta.
+            </h2>
+            <p className="mx-auto mt-4 max-w-sm text-sm leading-6 text-[#625f56]">
+              Gracias por aportar tu mirada. Tu evaluación quedó registrada y ayuda a otros
+              a elegir dónde disfrutar su próxima comida.
+            </p>
+            <div className="mx-auto my-7 h-px w-16 bg-[var(--gold)]/70" />
+            <p className="text-sm text-[#77715f]">Tu visita a</p>
+            <p className="serif mt-1 text-xl">{r?.nombre ?? "este restaurante"}</p>
             <button
               type="button"
               onClick={() => navigate({ to: "/restaurante/$id", params: { id } })}
-              className="btn-primary mt-4 w-full"
+              className="mt-8 inline-flex min-h-12 w-full items-center justify-center gap-3 rounded-full bg-[#263b32] px-6 py-3 text-sm font-medium tracking-wide text-white transition hover:bg-[#1b2c25] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--gold)]"
             >
               Volver a la ficha
+              <span aria-hidden="true">→</span>
+            </button>
+            <p className="mt-4 text-xs tracking-wide text-[#77715f]">
+              GRACIAS POR SER PARTE DE GUÍA·ME
+            </p>
+          </div>
+        </section>
+      ) : (
+        <>
+          <div className="gm-evaluation-form">
+            <Escala label="Food" valor={food} onChange={setFood} />
+            <Escala label="Decor" valor={decor} onChange={setDecor} />
+            <Escala label="Service" valor={service} onChange={setService} />
+            <Escala label="Cost" valor={cost} onChange={setCost} />
+
+            <Campo label="Ambiente">
+              {AMBIENTES.map((x) => (
+                <Chip key={x} activo={ambiente === x} onClick={() => setAmbiente(x)}>
+                  {x}
+                </Chip>
+              ))}
+            </Campo>
+
+            <Campo label="Con quién fuiste">
+              {CON_QUIEN.map((x) => (
+                <Chip key={x} activo={conQuien === x} onClick={() => setConQuien(x)}>
+                  {x}
+                </Chip>
+              ))}
+            </Campo>
+
+            <Campo label="Cuántas personas">
+              {PERSONAS.map((x) => (
+                <Chip key={x} activo={personas === x} onClick={() => setPersonas(x)}>
+                  {x}
+                </Chip>
+              ))}
+            </Campo>
+
+            <Campo label="Presupuesto por persona">
+              {PRESUPUESTOS.map((p) => (
+                <Chip key={p.label} activo={presupuesto === p.label} onClick={() => setPresupuesto(p.label)}>
+                  {p.label}
+                </Chip>
+              ))}
+            </Campo>
+
+            <Campo label="¿Volverías?">
+              {(["si", "no", "tal_vez"] as const).map((v) => (
+                <Chip key={v} activo={volveria === v} onClick={() => setVolveria(v)}>
+                  {v === "si" ? "Sí" : v === "no" ? "No" : "Tal vez"}
+                </Chip>
+              ))}
+            </Campo>
+
+            <Campo label="¿Lo recomendarías?">
+              <Chip activo={recomendaria === true} onClick={() => setRecomendaria(true)}>
+                Sí
+              </Chip>
+              <Chip activo={recomendaria === false} onClick={() => setRecomendaria(false)}>
+                No
+              </Chip>
+            </Campo>
+
+            <section className="py-5">
+              <p className="eyebrow">Plato recomendado</p>
+              <input
+                className="field mt-3"
+                value={plato}
+                onChange={(e) => setPlato(e.target.value)}
+                placeholder="Ej. carimañolas"
+              />
+            </section>
+
+            <section className="py-5">
+              <p className="eyebrow">Comentario</p>
+              <textarea
+                className="field mt-3 min-h-24"
+                value={comentario}
+                onChange={(e) => setComentario(e.target.value)}
+                placeholder="¿Cómo fue tu experiencia?"
+              />
+            </section>
+          </div>
+
+          <div className="py-8">
+            {error && <p role="alert" className="mb-3 text-sm text-destructive">{error}</p>}
+            <button type="button" onClick={enviar} disabled={enviando} className="btn-primary w-full disabled:opacity-40">
+              {enviando ? "Guardando…" : "Enviar evaluación"}
             </button>
           </div>
-        )}
-        {!exito && (
-          <button type="button" onClick={enviar} disabled={enviando} className="btn-primary w-full disabled:opacity-40">
-            {enviando ? "Guardando…" : "Enviar evaluación"}
-          </button>
-        )}
-      </div>
+        </>
+      )}
     </Shell>
   );
 }
