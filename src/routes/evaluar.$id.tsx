@@ -108,7 +108,7 @@ function Evaluar() {
             <button
               type="button"
               onClick={() => navigate({ to: "/restaurante/$id", params: { id } })}
-              className="mt-8 inline-flex min-h-12 w-full items-center justify-center gap-3 rounded-full bg-[#263b32] px-6 py-3 text-sm font-medium tracking-wide text-white transition hover:bg-[#1b2c25] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--gold)]"
+              className="group relative mt-8 inline-flex min-h-14 w-full items-center justify-center gap-3 overflow-hidden rounded-full border border-[#c5a96b] bg-gradient-to-r from-[#263b32] via-[#314d40] to-[#263b32] px-6 py-3 text-sm font-semibold uppercase tracking-[0.16em] text-[#fffaf0] shadow-[0_8px_24px_rgba(38,59,50,0.2)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_12px_28px_rgba(38,59,50,0.3)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--gold)] active:translate-y-0"
             >
               Volver a la ficha
               <span aria-hidden="true">→</span>
