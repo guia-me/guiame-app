@@ -17,6 +17,7 @@ function Restaurante() {
   const [c, setC] = useState<Contexto | null>(null);
   const [favs, setFavs] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState<"resumen" | "menu" | "opiniones">("resumen");
+  const [mostrarNavegacion, setMostrarNavegacion] = useState(false);
   useEffect(() => { setC(leerContexto()); setFavs(leerFavoritos()); }, []);
 
   const { data: r } = useQuery(restauranteQuery(id));
@@ -97,9 +98,28 @@ function Restaurante() {
         )}
 
         <div className="gm-detail-actions">
-          <a className="gm-secondary" href={r.lat != null && r.lng != null ? "https://www.google.com/maps/dir/?api=1&destination=" + r.lat + "," + r.lng : "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(r.direccion || r.nombre)} target="_blank" rel="noreferrer">CÓMO LLEGAR</a>
+          <button type="button" className="gm-secondary" onClick={() => setMostrarNavegacion(true)}>LLEVAME · CÓMO LLEGAR</button>
           <Link className="gm-cta" to="/evaluar/$id" params={{id}}>EVALUAR ESTE LUGAR</Link>
         </div>
+        {mostrarNavegacion && (
+          <div role="presentation" onClick={() => setMostrarNavegacion(false)} style={{position:"fixed",inset:0,zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:20,background:"rgba(17,27,22,.62)"}}>
+            <section role="dialog" aria-modal="true" aria-labelledby="guiame-navigation-title" onClick={e => e.stopPropagation()} style={{width:"100%",maxWidth:360,border:"1px solid #c5a96b",borderRadius:24,background:"#fbf8f1",padding:24,color:"#263b32",boxShadow:"0 24px 70px rgba(0,0,0,.25)"}}>
+              <p style={{fontSize:10,letterSpacing:".22em",textTransform:"uppercase",color:"#8d7749",margin:"0 0 8px"}}>GUÍA·ME · LLEVAME</p>
+              <h2 id="guiame-navigation-title" style={{fontFamily:"Georgia,serif",fontSize:28,lineHeight:1.15,margin:"0 0 8px"}}>¿Cómo quieres llegar?</h2>
+              <p style={{fontSize:13,color:"#6d6b60",margin:"0 0 20px"}}>{r.nombre}</p>
+              {[
+                {name:"Google Maps",url:r.lat != null && r.lng != null ? "https://www.google.com/maps/dir/?api=1&destination="+r.lat+","+r.lng : "https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(r.direccion || r.nombre)},
+                {name:"Waze",url:r.lat != null && r.lng != null ? "https://waze.com/ul?ll="+r.lat+","+r.lng+"&navigate=yes" : "https://waze.com/ul?q="+encodeURIComponent(r.direccion || r.nombre)+"&navigate=yes"},
+                {name:"Uber",url:r.lat != null && r.lng != null ? "https://m.uber.com/ul/?action=setPickup&dropoff[latitude]="+r.lat+"&dropoff[longitude]="+r.lng+"&dropoff[nickname]="+encodeURIComponent(r.nombre) : "https://m.uber.com/ul/?action=setPickup&dropoff[formatted_address]="+encodeURIComponent(r.direccion || r.nombre)}
+              ].map((opcion,i) => (
+                <a key={opcion.name} href={opcion.url} target="_blank" rel="noreferrer" style={{display:"flex",alignItems:"center",justifyContent:"space-between",minHeight:52,marginTop:10,padding:"0 16px",borderRadius:999,border:i===0?"1px solid #c5a96b":"1px solid #ddd4c3",background:i===0?"#263b32":"#fffdf8",color:i===0?"#fffaf0":"#263b32",fontSize:14,fontWeight:600,textDecoration:"none"}}>
+                  <span>{opcion.name}</span><span aria-hidden="true" style={{color:i===0?"#e3c985":"#9a814d"}}>↗</span>
+                </a>
+              ))}
+              <button type="button" onClick={() => setMostrarNavegacion(false)} style={{display:"block",margin:"18px auto 0",padding:"8px 16px",border:0,background:"transparent",color:"#77715f",fontSize:13,cursor:"pointer"}}>Cancelar</button>
+            </section>
+          </div>
+        )}
       </div>
       <div style={{height:72}} />
     </div>
