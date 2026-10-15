@@ -9,7 +9,7 @@ import {
 } from "@/lib/guiame";
 import type { Pais, Ciudad, Zona } from "@/lib/queries";
 
-const PANAMA_HERO = "https://images.unsplash.com/photo-1587759301533-ae42d7065a80?auto=format&fit=crop&w=1400&q=86";
+const PANAMA_HERO = "https://assets.simpleviewinc.com/simpleview/image/upload/c_fill%2Cf_jpg%2Ch_325%2Cq_65%2Cw_640/v1/clients/panama/large_Independence_Square_Cathedral_Square_Casco_Antiguo_Panama_city__59758aac-4071-4446-92a6-e62eb6087ae9.jpg";
 
 export const Route = createFileRoute("/")({
   ssr: false,
@@ -139,22 +139,28 @@ function Inicio() {
               {c.usarUbicacion ? "Buscando cerca de ti" : c.ciudadNombre ? c.ciudadNombre : "Selecciona una zona"}
             </small>
           </div>
-          <button type="button" onClick={() => setMostrarUbicacion(v => !v)}>
-            {mostrarUbicacion ? "CERRAR" : "CAMBIAR"}
+          <button type="button" onClick={() => {
+            if (modo !== "zona") {
+              elegirZona();
+            } else {
+              setMostrarUbicacion(v => !v);
+            }
+          }}>
+            {modo !== "zona" ? "CAMBIAR UBICACIÓN" : mostrarUbicacion ? "OCULTAR ZONAS" : "CAMBIAR ZONA"}
           </button>
         </div>
 
         <div className="gm-mode-grid">
           <button type="button" className={modo === "zona" ? "gm-mode-btn active" : "gm-mode-btn"} onClick={elegirZona}>
-            ZONA
+            BUSCAR EN TU ZONA
           </button>
           <button type="button" className={modo === "ubicacion" ? "gm-mode-btn active" : "gm-mode-btn"} onClick={usarUbicacion}>
             <Navigation size={12} style={{verticalAlign:"-2px",marginRight:4}} />
-            MI UBICACIÓN
+            USAR MI UBICACIÓN
           </button>
         </div>
 
-        {(mostrarUbicacion || modo === "zona") && (
+        {(mostrarUbicacion && modo === "zona") && (
           <div>
             <Campo label="País">
               {paises.map(p => (

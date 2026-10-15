@@ -16,6 +16,8 @@ function Restaurante() {
   const { id } = Route.useParams();
   const [c, setC] = useState<Contexto | null>(null);
   const [favs, setFavs] = useState<string[]>([]);
+  const [activeTab, setActiveTab] = useState<"resumen" | "menu" | "opiniones">("resumen");
+  const [mostrarNavegacion, setMostrarNavegacion] = useState(false);
   useEffect(() => { setC(leerContexto()); setFavs(leerFavoritos()); }, []);
 
   const { data: r } = useQuery(restauranteQuery(id));
@@ -48,49 +50,75 @@ function Restaurante() {
           </div>
         </div>
 
-        <div className="gm-tabs">
-          <span className="gm-tab active">Resumen</span>
-          <span className="gm-tab">Menú</span>
-          <span className="gm-tab">Opiniones</span>
+        <div className="gm-tabs" role="tablist" aria-label="Información del restaurante">
+          {(["resumen", "menu", "opiniones"] as const).map(tab => (
+            <button key={tab} type="button" role="tab" aria-selected={activeTab === tab}
+              className={activeTab === tab ? "gm-tab active" : "gm-tab"}
+              onClick={() => setActiveTab(tab)}>
+              {tab === "resumen" ? "Resumen" : tab === "menu" ? "Menú" : "Opiniones"}
+            </button>
+          ))}
         </div>
 
-        <section className="gm-detail-highlight">
-          <p className="gm-label">¿POR QUÉ TE LO RECOMENDAMOS?</p>
-          <p>{r.descripcion || "Una recomendación construida con la información disponible y la experiencia de la comunidad GUÍA·ME."}</p>
-          {r.contextos?.length ? <p style={{marginBottom:0}}>Ideal para: {r.contextos.join(", ").toLowerCase()}.</p> : null}
-        </section>
-
-        <section className="gm-detail-section">
-          <h2>Valoración GUÍA·ME</h2>
-          <Zagat r={r} />
-          <p style={{fontSize:9,marginTop:10}}>Puntuaciones sobre 30. El precio se muestra aparte como rango real por persona: <strong>{rangoPrecio(r)}</strong>.</p>
-        </section>
-
-        <section className="gm-detail-section">
-          <h2>La experiencia</h2>
-          <p>{r.descripcion || "Cocina y servicio evaluados por la comunidad. La ficha se actualiza a medida que recibimos nuevas experiencias."}</p>
-          {latestComment ? <p style={{fontFamily:"Playfair Display,serif",fontSize:16}}>“{latestComment}”</p> : null}
-          {dishes.length > 0 ? (
-            <>
-              <p className="gm-label" style={{marginTop:14}}>LO QUE PEDIR</p>
-              <p>{dishes.map((d,i) => <span key={i}><strong>{d}</strong>{i<dishes.length-1 ? " · " : ""}</span>)}</p>
-            </>
-          ) : null}
-          <p style={{fontSize:9,color:"#898279"}}>{evaluaciones?.length ?? 0} evaluaciones · {aportes?.length ?? 0} aportes de ficha</p>
-        </section>
-
-        <section className="gm-detail-section">
-          <h2>Servicios y ubicación</h2>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-            {r.ambiente?.slice(0,4).map(x => <span key={x} style={{fontSize:9,padding:"9px",border:"1px solid #e1dacf"}}>＋ {x}</span>)}
-          </div>
-          <p style={{marginTop:12}}>{r.direccion || "Dirección pendiente"}</p>
-        </section>
+        {activeTab === "resumen" && (
+          <>
+            <section className="gm-detail-highlight">
+              <p className="gm-label">¿POR QUÉ TE LO RECOMENDAMOS?</p>
+              <p>{r.descripcion || "Una recomendación construida con la información disponible y la experiencia de la comunidad GUÍA·ME."}</p>
+              {r.contextos?.length ? <p style={{marginBottom:0}}>Ideal para: {r.contextos.join(", ").toLowerCase()}.</p> : null}
+            </section>
+            <section className="gm-detail-section">
+              <h2>Valoración GUÍA·ME</h2>
+              <Zagat r={r} />
+              <p style={{fontSize:9,marginTop:10}}>Puntuaciones sobre 30. Precio por persona: <strong>{rangoPrecio(r)}</strong>.</p>
+            </section>
+            <section className="gm-detail-section">
+              <h2>Servicios y ubicación</h2>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                {r.ambiente?.slice(0,4).map(x => <span key={x} style={{fontSize:9,padding:"9px",border:"1px solid #e1dacf"}}>＋ {x}</span>)}
+              </div>
+              <p style={{marginTop:12}}>{r.direccion || "Dirección pendiente"}</p>
+            </section>
+          </>
+        )}
+        {activeTab === "menu" && (
+          <section className="gm-detail-section">
+            <h2>Menú y platos recomendados</h2>
+            {dishes.length > 0 ? <p>{dishes.map((dish,i) => <span key={i}><strong>{dish}</strong>{i < dishes.length - 1 ? " · " : ""}</span>)}</p> : <p>La comunidad todavía no ha compartido platos de este restaurante.</p>}
+            <p className="gm-card-meta">Los platos aparecerán aquí a medida que los usuarios compartan sus experiencias.</p>
+          </section>
+        )}
+        {activeTab === "opiniones" && (
+          <section className="gm-detail-section">
+            <h2>Opiniones de la comunidad</h2>
+            {latestComment ? <blockquote className="gm-review-quote">“{latestComment}”</blockquote> : <p>Todavía no hay opiniones escritas para este restaurante.</p>}
+            <p style={{fontSize:9,color:"#898279"}}>{evaluaciones?.length ?? 0} evaluaciones · {aportes?.length ?? 0} aportes de ficha</p>
+            <Link className="gm-cta" to="/evaluar/$id" params={{id}}>DEJAR MI OPINIÓN</Link>
+          </section>
+        )}
 
         <div className="gm-detail-actions">
-          <a className="gm-secondary" href={r.lat != null && r.lng != null ? "https://www.google.com/maps/dir/?api=1&destination=" + r.lat + "," + r.lng : "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(r.direccion || r.nombre)} target="_blank" rel="noreferrer">CÓMO LLEGAR</a>
+          <button type="button" className="gm-secondary" onClick={() => setMostrarNavegacion(true)}>LLEVAME · CÓMO LLEGAR</button>
           <Link className="gm-cta" to="/evaluar/$id" params={{id}}>EVALUAR ESTE LUGAR</Link>
         </div>
+        {mostrarNavegacion && (
+          <div role="presentation" onClick={() => setMostrarNavegacion(false)} style={{position:"fixed",inset:0,zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:20,background:"rgba(17,27,22,.62)"}}>
+            <section role="dialog" aria-modal="true" aria-labelledby="guiame-navigation-title" onClick={e => e.stopPropagation()} style={{width:"100%",maxWidth:360,border:"1px solid #c5a96b",borderRadius:24,background:"#fbf8f1",padding:24,color:"#263b32",boxShadow:"0 24px 70px rgba(0,0,0,.25)"}}>
+              <p style={{fontSize:10,letterSpacing:".22em",textTransform:"uppercase",color:"#8d7749",margin:"0 0 8px"}}>GUÍA·ME · LLEVAME</p>
+              <h2 id="guiame-navigation-title" style={{fontFamily:"Georgia,serif",fontSize:28,lineHeight:1.15,margin:"0 0 8px"}}>¿Cómo quieres llegar?</h2>
+              <p style={{fontSize:13,color:"#6d6b60",margin:"0 0 20px"}}>{r.nombre}</p>
+              {[
+                {name:"Google Maps",url:r.lat != null && r.lng != null ? "https://www.google.com/maps/dir/?api=1&destination="+r.lat+","+r.lng : "https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(r.direccion || r.nombre)},
+                {name:"Uber",url:r.lat != null && r.lng != null ? "https://m.uber.com/ul/?action=setPickup&dropoff[latitude]="+r.lat+"&dropoff[longitude]="+r.lng+"&dropoff[nickname]="+encodeURIComponent(r.nombre) : "https://m.uber.com/ul/?action=setPickup&dropoff[formatted_address]="+encodeURIComponent(r.direccion || r.nombre)}
+              ].map((opcion,i) => (
+                <a key={opcion.name} href={opcion.url} target="_blank" rel="noreferrer" style={{display:"flex",alignItems:"center",justifyContent:"space-between",minHeight:52,marginTop:10,padding:"0 16px",borderRadius:999,border:i===0?"1px solid #c5a96b":"1px solid #ddd4c3",background:i===0?"#263b32":"#fffdf8",color:i===0?"#fffaf0":"#263b32",fontSize:14,fontWeight:600,textDecoration:"none"}}>
+                  <span>{opcion.name}</span><span aria-hidden="true" style={{color:i===0?"#e3c985":"#9a814d"}}>↗</span>
+                </a>
+              ))}
+              <button type="button" onClick={() => setMostrarNavegacion(false)} style={{display:"block",margin:"18px auto 0",padding:"8px 16px",border:0,background:"transparent",color:"#77715f",fontSize:13,cursor:"pointer"}}>Cancelar</button>
+            </section>
+          </div>
+        )}
       </div>
       <div style={{height:72}} />
     </div>
