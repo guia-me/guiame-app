@@ -1023,3 +1023,12 @@ body{background:var(--gm-cream);color:var(--gm-ink)}
 .gm-main .eyebrow{font-size:9px;letter-spacing:.18em;color:var(--gm-gold)}
 .gm-app .space-y-5>*+*{margin-top:14px}
 @media(max-width:380px){.gm-why-panel{margin-left:9px;margin-right:9px;padding:18px 13px}.gm-why-panel h2{font-size:23px}.gm-reason{grid-template-columns:66px 1fr 32px;gap:6px}.gm-map-frame{min-height:360px}.gm-map-card>img{width:62px;flex-basis:62px}}
+
+
+/* FIX portada beta: skyline panorámico y tratamiento cinematográfico oscuro */
+.gm-home-hero{background:#101a17!important;}
+.gm-home-hero>img{filter:brightness(.66) saturate(.78) contrast(1.08)!important;object-position:center 48%!important;}
+.gm-home-hero:after{z-index:1!important;background:linear-gradient(180deg,rgba(8,14,13,.28) 0%,rgba(8,14,13,.18) 28%,rgba(8,14,13,.58) 62%,rgba(8,14,13,.94) 100%)!important;}
+.gm-home-copy{z-index:2!important;}
+.gm-home-copy .gm-kicker{color:#dfc78f!important;text-shadow:0 1px 8px #0008;}
+.gm-home-copy h1,.gm-home-copy p{color:#fffdf8!important;text-shadow:0 2px 18px rgba(0,0,0,.42)!important;}
