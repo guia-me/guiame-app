@@ -9,7 +9,7 @@ import {
 } from "@/lib/guiame";
 import type { Pais, Ciudad, Zona } from "@/lib/queries";
 
-const PANAMA_HERO = "https://assets.simpleviewinc.com/simpleview/image/upload/c_fill%2Cf_jpg%2Ch_325%2Cq_65%2Cw_640/v1/clients/panama/large_Independence_Square_Cathedral_Square_Casco_Antiguo_Panama_city__59758aac-4071-4446-92a6-e62eb6087ae9.jpg";
+const PANAMA_HERO = "https://images.unsplash.com/photo-1519501025264-65ba15a82390?auto=format&fit=crop&w=1600&q=85";
 
 export const Route = createFileRoute("/")({
   ssr: false,
