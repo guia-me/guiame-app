@@ -984,3 +984,42 @@ body{background:var(--gm-cream);color:var(--gm-ink)}
 .gm-card-photo img{object-fit:cover;object-position:center 50%}
 @media(min-width:700px){.gm-home-hero{height:480px!important}.gm-home-panel{margin-top:-38px!important}}
 @media(max-width:380px){.gm-home-hero{height:390px!important}.gm-home-copy{bottom:48px!important}.gm-home-panel{margin-left:9px!important;margin-right:9px!important;padding:17px 13px 19px!important}}
+
+
+/* GUÍA·ME — cierre visual de rutas secundarias, misma familia del master */
+.gm-why-page{max-width:520px;margin:0 auto;min-height:100dvh;background:var(--gm-cream);padding-bottom:24px}
+.gm-why-hero{position:relative;isolation:isolate;height:clamp(330px,52vh,430px);overflow:hidden;background:#17231f;color:#fffdf8}
+.gm-why-hero>img{width:100%;height:100%;display:block;object-fit:cover;object-position:center 52%;filter:saturate(.96) contrast(1.03)}
+.gm-why-hero:after{content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,rgba(8,16,17,.24),rgba(8,16,17,.08) 34%,rgba(8,16,17,.88));pointer-events:none}
+.gm-why-hero .gm-icon-button,.gm-why-hero .gm-match-badge,.gm-why-hero-content{z-index:2}
+.gm-why-hero .gm-icon-button{display:grid;place-items:center;width:40px;height:40px;border:1px solid rgba(255,253,248,.65);border-radius:50%;color:#fffdf8;background:rgba(18,27,25,.45);backdrop-filter:blur(8px)}
+.gm-why-hero .gm-match-badge{left:20px;top:auto;bottom:105px}
+.gm-why-hero-content{position:absolute;left:20px;right:18px;bottom:24px}
+.gm-why-hero-content h1{font:500 clamp(30px,7vw,40px)/1.05 "Playfair Display",Georgia,serif;margin:0 0 8px;letter-spacing:-.02em}
+.gm-why-hero-content p{margin:0;font-size:11px;line-height:1.5;color:rgba(255,253,248,.88)}
+.gm-why-panel{position:relative;margin:-16px 12px 0;padding:21px 17px 20px;border:1px solid var(--gm-line);border-radius:18px;background:var(--gm-paper);box-shadow:0 14px 36px rgba(35,31,24,.09);z-index:3}
+.gm-why-panel h2{font:500 25px/1.12 "Playfair Display",Georgia,serif;margin:0 0 12px;color:var(--gm-ink)}
+.gm-why-panel>p:not(.gm-label){font-size:12px;line-height:1.65;color:#625f56;margin:0 0 18px}
+.gm-reason{display:grid;grid-template-columns:minmax(72px,auto) 1fr 36px;gap:9px;align-items:center;margin:13px 0}
+.gm-reason label{font-size:10px;color:var(--gm-muted)}
+.gm-reason>strong{font-size:11px;text-align:right;color:var(--gm-green)}
+.gm-reason-bar{height:6px;background:#e9e4d9;border-radius:999px;overflow:hidden}
+.gm-reason-bar span{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#71806a,#b69a60)}
+.gm-cta{display:flex;align-items:center;justify-content:center;padding:13px 16px;text-align:center;text-decoration:none;font-size:10px;line-height:1.35}
+.gm-map-page{position:relative;max-width:520px;margin:0 auto;min-height:calc(100dvh - 65px);padding-bottom:20px;background:var(--gm-cream)}
+.gm-map-overlay{position:absolute;z-index:10;top:12px;left:12px;right:12px;display:flex;align-items:center;justify-content:space-between;gap:10px;pointer-events:none}
+.gm-map-search,.gm-map-count{border:1px solid var(--gm-line);background:rgba(255,253,248,.96);box-shadow:0 4px 15px rgba(35,31,24,.12);border-radius:999px;padding:11px 14px;color:var(--gm-ink);font-size:11px;font-weight:600}
+.gm-map-count{white-space:nowrap;color:var(--gm-green)}
+.gm-map-frame{height:calc(100dvh - 155px);min-height:390px;background:#e6e0d3}
+.gm-map-frame>div{height:100%}
+.gm-map-cards{display:grid;gap:9px;margin:-22px 12px 0;position:relative;z-index:12;max-height:36vh;overflow:auto;padding:0 0 6px}
+.gm-map-card{display:flex;align-items:center;gap:12px;min-height:84px;padding:9px;border:1px solid var(--gm-line);border-radius:14px;background:rgba(255,253,248,.98);box-shadow:0 7px 20px rgba(35,31,24,.1)}
+.gm-map-card>img{width:72px;height:66px;flex:0 0 72px;object-fit:cover;border-radius:9px;background:#e8e1d4}
+.gm-map-card h3{font:500 17px/1.15 "Playfair Display",Georgia,serif;margin:0 0 5px}
+.gm-map-card p{font-size:10px;line-height:1.4;color:var(--gm-muted);margin:0}
+.gm-map-empty{margin:16px;padding:24px;border:1px solid var(--gm-line);border-radius:14px;background:var(--gm-paper);font-size:12px;line-height:1.6;color:var(--gm-muted)}
+.gm-evaluation-form .btn-primary,.gm-main .btn-primary,.gm-main button.btn-primary{display:flex;align-items:center;justify-content:center;min-height:50px;padding:12px 16px;border:1px solid var(--gm-gold);border-radius:999px;background:var(--gm-green);color:var(--gm-paper);font-size:10px;font-weight:700;letter-spacing:.1em;box-shadow:0 7px 18px rgba(38,59,50,.13)}
+.gm-evaluation-form .field,.gm-main .field{display:block;width:100%;padding:12px 13px;border:1px solid var(--gm-line);border-radius:10px;background:var(--gm-paper);color:var(--gm-ink);font:inherit;font-size:13px}
+.gm-main .eyebrow{font-size:9px;letter-spacing:.18em;color:var(--gm-gold)}
+.gm-app .space-y-5>*+*{margin-top:14px}
+@media(max-width:380px){.gm-why-panel{margin-left:9px;margin-right:9px;padding:18px 13px}.gm-why-panel h2{font-size:23px}.gm-reason{grid-template-columns:66px 1fr 32px;gap:6px}.gm-map-frame{min-height:360px}.gm-map-card>img{width:62px;flex-basis:62px}}
