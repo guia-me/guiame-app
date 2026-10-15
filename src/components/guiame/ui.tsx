@@ -3,12 +3,17 @@ import { Heart, Home, Map, Plus, Star, ArrowRight, MapPin } from "lucide-react";
 import type { ReactNode } from "react";
 import { ETIQUETA_ESTADO, rangoPrecio, type EstadoInfo, type Restaurante } from "@/lib/guiame";
 
-// Placeholder editorial: no sustituir una foto real por una imagen genérica de comida.
-const NO_PHOTO_IMAGE =
-  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 900 600'%3E%3Crect width='900' height='600' fill='%23f2eee4'/%3E%3Ccircle cx='450' cy='265' r='118' fill='none' stroke='%23c5a45f' stroke-width='4'/%3E%3Ccircle cx='450' cy='265' r='91' fill='none' stroke='%23c5a45f' stroke-width='2'/%3E%3Cpath d='M400 265h100M450 215v100' stroke='%2368725b' stroke-width='2'/%3E%3Ctext x='450' y='445' font-family='Georgia,serif' font-size='25' letter-spacing='5' text-anchor='middle' fill='%2312191b'%3EGU%C3%8DA%C2%B7ME%3C/text%3E%3Ctext x='450' y='482' font-family='Arial,sans-serif' font-size='15' letter-spacing='3' text-anchor='middle' fill='%236e6a61'%3EFOTOGRAF%C3%8DA PENDIENTE%3C/text%3E%3C/svg%3E";
+// Fotografías genéricas de ambiente gastronómico para la beta.
+// Solo se usan cuando el restaurante todavía no tiene una fotografía propia.
+const GENERIC_RESTAURANT_IMAGES = [
+  "https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?auto=format&fit=crop&w=1000&q=80",
+  "https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=1000&q=80",
+  "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=1000&q=80",
+  "https://images.unsplash.com/photo-1546549032-9571cd6b27df?auto=format&fit=crop&w=1000&q=80",
+];
 
-export function imagenRestaurante(r: Restaurante, _index = 0) {
-  return r.imagen_url || NO_PHOTO_IMAGE;
+export function imagenRestaurante(r: Restaurante, index = 0) {
+  return r.imagen_url || GENERIC_RESTAURANT_IMAGES[Math.abs(index) % GENERIC_RESTAURANT_IMAGES.length];
 }
 
 export function Marca() {
