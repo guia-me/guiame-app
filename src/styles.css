@@ -1032,3 +1032,12 @@ body{background:var(--gm-cream);color:var(--gm-ink)}
 .gm-home-copy{z-index:2!important;}
 .gm-home-copy .gm-kicker{color:#dfc78f!important;text-shadow:0 1px 8px #0008;}
 .gm-home-copy h1,.gm-home-copy p{color:#fffdf8!important;text-shadow:0 2px 18px rgba(0,0,0,.42)!important;}
+
+
+/* FIX contraste del encabezado móvil: marca GUÍA·ME legible y completa */
+.gm-header{background:#17231f!important;background-color:#17231f!important;border-bottom:1px solid rgba(182,154,96,.48)!important;color:#fffdf8!important;min-height:88px!important;padding-top:env(safe-area-inset-top)!important;}
+.gm-header .gm-brand,.gm-header .brand,.gm-header a,.gm-header button{color:#fffdf8!important;}
+.gm-header .gm-brand span,.gm-header .brand span{color:#c5a66a!important;}
+.gm-header .gm-brand,.gm-header .brand{line-height:1.15!important;display:flex;align-items:center;justify-content:center;min-height:64px;}
+.gm-header svg{color:#c5a66a!important;}
+@media(max-width:700px){.gm-header{min-height:94px!important;padding-top:6px!important;padding-bottom:6px!important}.gm-header .gm-brand,.gm-header .brand{min-height:70px!important;white-space:normal!important;}}
