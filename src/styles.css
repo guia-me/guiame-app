@@ -1130,3 +1130,35 @@ body {
     padding-right: 14px !important;
   }
 }
+
+
+/* GUÍA·ME visual correction: remove generic skyline and keep the selection area on deep navy */
+.gm-home-shell,
+.gm-home-shell .gm-app,
+.gm-home-shell .gm-main,
+.gm-home-shell .gm-home-hero {
+  background-color: #17263a !important;
+}
+.gm-home-shell .gm-home-hero {
+  border-color: rgba(197,166,106,.20) !important;
+  box-shadow: none !important;
+}
+.gm-home-shell .gm-home-hero > img {
+  display: none !important;
+}
+.gm-home-shell .gm-home-hero::after {
+  background: none !important;
+}
+.gm-home-shell .gm-home-copy h1 {
+  color: #fffdf8 !important;
+}
+.gm-home-shell .gm-home-copy p,
+.gm-home-shell .gm-home-copy .gm-kicker {
+  color: #d7deea !important;
+}
+.gm-home-shell .gm-home-panel {
+  background: #fffdf8 !important;
+  color: #263b32 !important;
+  border: 1px solid rgba(197,166,106,.34) !important;
+  box-shadow: 0 20px 44px rgba(0,0,0,.28) !important;
+}
