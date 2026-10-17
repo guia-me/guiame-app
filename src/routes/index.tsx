@@ -9,7 +9,7 @@ import {
 } from "@/lib/guiame";
 import type { Pais, Ciudad, Zona } from "@/lib/queries";
 
-const PANAMA_HERO = "https://images.unsplash.com/photo-1519501025264-65ba15a82390?auto=format&fit=crop&w=1600&q=85";
+const PANAMA_HERO = "https://images.unsplash.com/photo-1705350007200-816e367f96b7?auto=format&fit=crop&w=1800&q=85";
 
 export const Route = createFileRoute("/")({
   ssr: false,
@@ -119,7 +119,7 @@ function Inicio() {
   return (
     <Shell home>
       <section className="gm-home-hero">
-        <img src={PANAMA_HERO} alt="" />
+        <img src={PANAMA_HERO} alt="Vista del Casco Viejo y la bahía de Ciudad de Panamá" fetchPriority="high" />
         <div className="gm-home-copy">
           <div className="gm-kicker">TU GUÍA GASTRONÓMICA PERSONAL</div>
           <h1>Buena comida,<br />mejores momentos.</h1>
