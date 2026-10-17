@@ -1,7 +1,8 @@
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { Link } from "@tanstack/react-router";
-import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
+import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
+import { useEffect } from "react";
 import MarkerClusterGroup from "react-leaflet-cluster";
 import "react-leaflet-cluster/dist/assets/MarkerCluster.css";
 import "react-leaflet-cluster/dist/assets/MarkerCluster.Default.css";
@@ -13,6 +14,17 @@ const icono = L.divIcon({
   iconSize: [14, 14],
   iconAnchor: [7, 7],
 });
+
+
+function AjustarVistaRestaurantes({ restaurantes }: { restaurantes: Restaurante[] }) {
+  const map = useMap();
+  useEffect(() => {
+    const points = restaurantes.filter(r => r.lat != null && r.lng != null).map(r => [r.lat!, r.lng!] as [number, number]);
+    if (points.length === 1) map.setView(points[0], 15, { animate: false });
+    else if (points.length > 1) map.fitBounds(L.latLngBounds(points), { padding: [32, 32], maxZoom: 15, animate: false });
+  }, [map, restaurantes]);
+  return null;
+}
 
 export default function MapView({
   restaurantes,
@@ -27,6 +39,7 @@ export default function MapView({
 }) {
   return (
     <MapContainer center={centro} zoom={zoom} style={{ height: alto, width: "100%" }} scrollWheelZoom>
+      <AjustarVistaRestaurantes restaurantes={restaurantes} />
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

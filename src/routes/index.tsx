@@ -9,7 +9,7 @@ import {
 } from "@/lib/guiame";
 import type { Pais, Ciudad, Zona } from "@/lib/queries";
 
-const PANAMA_HERO = "https://images.unsplash.com/photo-1587759301533-ae42d7065a80?auto=format&fit=crop&w=1400&q=86";
+const PANAMA_HERO = "https://images.unsplash.com/photo-1705350007200-816e367f96b7?auto=format&fit=crop&w=1800&q=85";
 
 export const Route = createFileRoute("/")({
   ssr: false,
@@ -119,7 +119,7 @@ function Inicio() {
   return (
     <Shell home>
       <section className="gm-home-hero">
-        <img src={PANAMA_HERO} alt="" />
+        <img src={PANAMA_HERO} alt="Vista del Casco Viejo y la bahía de Ciudad de Panamá" fetchPriority="high" />
         <div className="gm-home-copy">
           <div className="gm-kicker">TU GUÍA GASTRONÓMICA PERSONAL</div>
           <h1>Buena comida,<br />mejores momentos.</h1>
@@ -139,22 +139,28 @@ function Inicio() {
               {c.usarUbicacion ? "Buscando cerca de ti" : c.ciudadNombre ? c.ciudadNombre : "Selecciona una zona"}
             </small>
           </div>
-          <button type="button" onClick={() => setMostrarUbicacion(v => !v)}>
-            {mostrarUbicacion ? "CERRAR" : "CAMBIAR"}
+          <button type="button" onClick={() => {
+            if (modo !== "zona") {
+              elegirZona();
+            } else {
+              setMostrarUbicacion(v => !v);
+            }
+          }}>
+            {modo !== "zona" ? "CAMBIAR UBICACIÓN" : mostrarUbicacion ? "OCULTAR ZONAS" : "CAMBIAR ZONA"}
           </button>
         </div>
 
         <div className="gm-mode-grid">
           <button type="button" className={modo === "zona" ? "gm-mode-btn active" : "gm-mode-btn"} onClick={elegirZona}>
-            ZONA
+            BUSCAR EN TU ZONA
           </button>
           <button type="button" className={modo === "ubicacion" ? "gm-mode-btn active" : "gm-mode-btn"} onClick={usarUbicacion}>
             <Navigation size={12} style={{verticalAlign:"-2px",marginRight:4}} />
-            MI UBICACIÓN
+            USAR MI UBICACIÓN
           </button>
         </div>
 
-        {(mostrarUbicacion || modo === "zona") && (
+        {(mostrarUbicacion && modo === "zona") && (
           <div>
             <Campo label="País">
               {paises.map(p => (

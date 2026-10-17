@@ -3,14 +3,17 @@ import { Heart, Home, Map, Plus, Star, ArrowRight, MapPin } from "lucide-react";
 import type { ReactNode } from "react";
 import { ETIQUETA_ESTADO, rangoPrecio, type EstadoInfo, type Restaurante } from "@/lib/guiame";
 
-const FALLBACK_IMAGES = [
-  "https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?auto=format&fit=crop&w=900&q=82",
-  "https://images.unsplash.com/photo-1566889110088-1119b49ce526?auto=format&fit=crop&w=900&q=82",
-  "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=900&q=82",
+// Fotografías genéricas de ambiente gastronómico para la beta.
+// Solo se usan cuando el restaurante todavía no tiene una fotografía propia.
+const GENERIC_RESTAURANT_IMAGES = [
+  "https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?auto=format&fit=crop&w=1000&q=80",
+  "https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=1000&q=80",
+  "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=1000&q=80",
+  "https://images.unsplash.com/photo-1546549032-9571cd6b27df?auto=format&fit=crop&w=1000&q=80",
 ];
 
 export function imagenRestaurante(r: Restaurante, index = 0) {
-  return r.imagen_url || FALLBACK_IMAGES[index % FALLBACK_IMAGES.length];
+  return r.imagen_url || GENERIC_RESTAURANT_IMAGES[Math.abs(index) % GENERIC_RESTAURANT_IMAGES.length];
 }
 
 export function Marca() {
@@ -134,8 +137,8 @@ export function Zagat({ r }: { r: Restaurante }) {
   const item = (label: string, value: number | null) => (
     <div>
       <span>{label}</span>
-      <strong>{value != null ? value : "—"}</strong>
-      <small>{value != null ? "/30" : ""}</small>
+      <strong>{value != null ? value : "Pendiente"}</strong>
+      <small>{value != null ? "/30" : "Sin evaluaciones"}</small>
     </div>
   );
   return (
@@ -143,6 +146,7 @@ export function Zagat({ r }: { r: Restaurante }) {
       {item("Comida", r.food_avg)}
       {item("Decoración", r.decor_avg)}
       {item("Servicio", r.service_avg)}
+      <div className="gm-price-score"><span>Precio por persona</span><strong>{rangoPrecio(r)}</strong><small>rango estimado</small></div>
     </div>
   );
 }

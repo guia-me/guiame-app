@@ -32,7 +32,9 @@ function Mapa() {
   });
   const lugares = compatibles.filter((r) => r.lat != null && r.lng != null);
   const first = lugares[0];
-  const center: [number, number] = c?.lat != null && c?.lng != null
+  // Solo centrar en la geolocalización del usuario si este eligió expresamente ese modo.
+  // En una búsqueda por zona, el mapa se encuadra alrededor de los restaurantes encontrados.
+  const center: [number, number] = c?.usarUbicacion && c.lat != null && c.lng != null
     ? [c.lat, c.lng]
     : first?.lat != null && first?.lng != null
       ? [first.lat, first.lng]
