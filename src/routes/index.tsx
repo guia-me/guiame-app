@@ -152,7 +152,7 @@ function Inicio() {
 
         <div className="gm-mode-grid">
           <button type="button" className={modo === "zona" ? "gm-mode-btn active" : "gm-mode-btn"} onClick={elegirZona}>
-            BUSCAR EN TU ZONA
+            BUSCAR EN OTRA ZONA
           </button>
           <button type="button" className={modo === "ubicacion" ? "gm-mode-btn active" : "gm-mode-btn"} onClick={usarUbicacion}>
             <Navigation size={12} style={{verticalAlign:"-2px",marginRight:4}} />
