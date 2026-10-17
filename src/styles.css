@@ -1144,10 +1144,11 @@ body {
   box-shadow: none !important;
 }
 .gm-home-shell .gm-home-hero > img {
-  display: none !important;
+  display:block!important;position:absolute!important;inset:0!important;width:100%!important;height:100%!important;
+  object-fit:cover!important;object-position:center 56%!important;filter:brightness(.76) saturate(1.02) contrast(1.04)!important;transform:none!important;
 }
 .gm-home-shell .gm-home-hero::after {
-  background: none !important;
+  z-index:1!important;background:linear-gradient(180deg,rgba(8,16,17,.10) 5%,rgba(8,16,17,.18) 35%,rgba(10,20,19,.88) 100%)!important;
 }
 .gm-home-shell .gm-home-copy h1 {
   color: #fffdf8 !important;
