@@ -1162,3 +1162,109 @@ body {
   border: 1px solid rgba(197,166,106,.34) !important;
   box-shadow: 0 20px 44px rgba(0,0,0,.28) !important;
 }
+
+
+/* GUÍA·ME beta: refine location-mode controls for mobile and desktop */
+.gm-home-shell .gm-mode-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+  padding: 0 !important;
+  margin: 18px 0 28px !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+}
+.gm-home-shell .gm-mode-grid .gm-mode-btn {
+  appearance: none !important;
+  min-width: 0 !important;
+  min-height: 54px !important;
+  padding: 12px 14px !important;
+  border: 1px solid #d9d1bf !important;
+  border-radius: 14px !important;
+  background: #fffdf8 !important;
+  color: #334238 !important;
+  box-shadow: 0 2px 0 rgba(37,49,40,.04) !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  letter-spacing: .045em !important;
+  line-height: 1.35 !important;
+  white-space: normal !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  gap: 5px !important;
+  transition: background-color .18s ease, border-color .18s ease, transform .18s ease !important;
+}
+.gm-home-shell .gm-mode-grid .gm-mode-btn.active {
+  background: #263b32 !important;
+  color: #fffdf8 !important;
+  border-color: #c5a66a !important;
+  box-shadow: inset 0 0 0 1px rgba(197,166,106,.22) !important;
+}
+.gm-home-shell .gm-mode-grid .gm-mode-btn:active {
+  transform: translateY(1px) !important;
+}
+.gm-home-shell .gm-location-card {
+  border-radius: 16px !important;
+  border: 1px solid #e3dccd !important;
+  background: #fffdf8 !important;
+  padding: 18px 18px !important;
+  gap: 12px !important;
+  box-shadow: none !important;
+}
+.gm-home-shell .gm-location-card > button {
+  border: 0 !important;
+  border-radius: 8px !important;
+  background: transparent !important;
+  color: #6b725f !important;
+  padding: 8px 0 0 !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: .04em !important;
+}
+.gm-home-shell .gm-home-hero {
+  min-height: 340px !important;
+  display: flex !important;
+  align-items: flex-end !important;
+  overflow: hidden !important;
+  position: relative !important;
+  padding: clamp(26px, 5vw, 54px) !important;
+  border-radius: 0 0 22px 22px !important;
+  background: #17263a !important;
+}
+.gm-home-shell .gm-home-copy {
+  position: relative !important;
+  z-index: 2 !important;
+  max-width: 700px !important;
+}
+.gm-home-shell .gm-home-copy h1 {
+  max-width: 700px !important;
+  font-size: clamp(38px, 6vw, 68px) !important;
+  line-height: 1.04 !important;
+  letter-spacing: -.035em !important;
+}
+@media (max-width: 700px) {
+  .gm-home-shell .gm-home-hero {
+    min-height: 330px !important;
+    padding: 28px 22px 34px !important;
+    border-radius: 0 0 18px 18px !important;
+  }
+  .gm-home-shell .gm-home-copy h1 {
+    font-size: clamp(37px, 10vw, 50px) !important;
+  }
+  .gm-home-shell .gm-mode-grid {
+    gap: 8px !important;
+    margin: 14px 0 24px !important;
+  }
+  .gm-home-shell .gm-mode-grid .gm-mode-btn {
+    min-height: 58px !important;
+    padding: 10px 8px !important;
+    font-size: 10px !important;
+    letter-spacing: .025em !important;
+  }
+  .gm-home-shell .gm-location-card {
+    padding: 15px !important;
+  }
+}
