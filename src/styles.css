@@ -1360,3 +1360,49 @@ body {
 .location-action-secondary:hover{background:#eee8dc;border-color:#8f826c}
 .location-action-primary:disabled{opacity:.65;cursor:wait;transform:none}
 @media(max-width:700px){.location-actions{grid-template-columns:1fr;gap:9px;margin-bottom:20px}.location-action-primary,.location-action-secondary{min-height:50px;font-size:10px}}
+
+
+/* GUÍA·ME — controles premium: separar visualmente los botones del panel claro */
+.gm-home-shell .gm-home-panel {
+  background: linear-gradient(155deg, #fffdf8 0%, #f8f5ec 100%) !important;
+  border-color: rgba(182,154,96,.42) !important;
+  box-shadow: 0 22px 52px rgba(12,20,15,.24), inset 0 1px 0 rgba(255,255,255,.95) !important;
+}
+.gm-home-shell .gm-home-panel .gm-mode-grid .gm-mode-btn:not(.active) {
+  background: linear-gradient(180deg, #e8ebe2 0%, #dfe4d8 100%) !important;
+  color: #354438 !important;
+  border: 1px solid #c4cbbb !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.72), 0 3px 8px rgba(39,54,40,.07) !important;
+}
+.gm-home-shell .gm-home-panel .gm-mode-grid .gm-mode-btn:not(.active):hover {
+  background: linear-gradient(180deg, #dce2d5 0%, #d2dacb 100%) !important;
+  border-color: #aebaa5 !important;
+  transform: translateY(-1px) !important;
+}
+.gm-home-shell .gm-home-panel .gm-mode-grid .gm-mode-btn.active {
+  background: linear-gradient(145deg, #34483a 0%, #26382d 100%) !important;
+  color: #fffdf8 !important;
+  border: 1px solid #b69a60 !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 7px 16px rgba(38,56,45,.22) !important;
+}
+.gm-home-shell .gm-home-panel .gm-chip:not(.active) {
+  background: linear-gradient(180deg, #e9ece4 0%, #dfe4d9 100%) !important;
+  color: #354438 !important;
+  border-color: #c8cfc0 !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.7), 0 2px 5px rgba(39,54,40,.045) !important;
+}
+.gm-home-shell .gm-home-panel .gm-chip:not(.active):hover {
+  background: #d8dfd1 !important;
+  border-color: #aebba5 !important;
+}
+.gm-home-shell .gm-home-panel .gm-chip.active {
+  background: linear-gradient(145deg, #34483a 0%, #26382d 100%) !important;
+  color: #fffdf8 !important;
+  border-color: #b69a60 !important;
+  box-shadow: 0 4px 11px rgba(38,56,45,.17) !important;
+}
+.gm-home-shell .gm-home-panel .gm-location-card {
+  background: #f1f0e8 !important;
+  border-color: #d8d6c9 !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.9), 0 3px 10px rgba(35,42,31,.045) !important;
+}
