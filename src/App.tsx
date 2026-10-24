@@ -103,6 +103,19 @@ export default function App() {
   const zones=useMemo(()=>zonas.filter(x=>x.ciudad_id===ctx.ciudadId),[zonas,ctx.ciudadId]);
   const set=(patch:Partial<Contexto>)=>setCtx(x=>({...x,...patch}));
 
+  async function actualizarUbicacion(){
+    if(!navigator.geolocation){setError("Este dispositivo no permite detectar la ubicación. Elige país, ciudad y zona manualmente.");setShowLocationPicker(true);return;}
+    setError(null);setLocationStatus("detecting");
+    navigator.geolocation.getCurrentPosition((pos)=>{
+      const lat=pos.coords.latitude, lng=pos.coords.longitude;
+      const patch:Partial<Contexto>={usarUbicacion:true,lat,lng,zonaId:null,zonaNombre:"Cerca de ti"};
+      set(patch);guardarContexto({...ctx,...patch});setLocationStatus("ready");setShowLocationPicker(false);
+    },(err)=>{
+      setLocationStatus("manual");setShowLocationPicker(true);
+      setError(err.code===1?"No tenemos permiso para usar tu ubicación. Permítelo en el navegador o elige otra zona.":"No pudimos detectar tu ubicación. Puedes elegir otra zona manualmente.");
+    },{enableHighAccuracy:true,timeout:12000,maximumAge:0});
+  }
+
   async function buscar(){
     if(!ctx.zonaId && !(ctx.usarUbicacion && ctx.lat != null && ctx.lng != null))return;
     setSearching(true);setError(null);
@@ -166,6 +179,10 @@ export default function App() {
           {ctx.paisId&&!ctx.usarUbicacion&&<><label>Ciudad</label><select value={ctx.ciudadId??""} onChange={e=>{const x=cities.find(v=>v.id===e.target.value);set({ciudadId:e.target.value||null,ciudadNombre:x?.nombre,zonaId:null,zonaNombre:undefined})}}><option value="">Selecciona una ciudad</option>{cities.map(x=><option key={x.id} value={x.id}>{x.nombre}</option>)}</select></>}
           {ctx.ciudadId&&!ctx.usarUbicacion&&<><label>Zona</label><select value={ctx.zonaId??""} onChange={e=>{const x=zones.find(v=>v.id===e.target.value);set({zonaId:e.target.value||null,zonaNombre:x?.nombre})}}><option value="">Selecciona una zona</option>{zones.map(x=><option key={x.id} value={x.id}>{x.nombre}</option>)}</select></>}
         </div>}
+        <div className="location-actions">
+          <button type="button" className="location-action-primary" onClick={actualizarUbicacion} disabled={locationStatus==="detecting"}>{locationStatus==="detecting"?"DETECTANDO UBICACIÓN…":"⌖ BUSCAR CERCA DE MÍ"}</button>
+          <button type="button" className="location-action-secondary" onClick={()=>{setShowLocationPicker(true);set({usarUbicacion:false,lat:null,lng:null,zonaId:null,zonaNombre:undefined});setLocationStatus("manual");}}>BUSCAR EN OTRA ZONA</button>
+        </div>
         <div className="search-mode"><button className={ctx.modoBusqueda==="restaurante"?"chip active":"chip"} onClick={()=>set({modoBusqueda:"restaurante",antojos:[]})}>BUSCO UN RESTAURANTE</button><button className={ctx.modoBusqueda==="antojo"?"chip active":"chip"} onClick={()=>set({modoBusqueda:"antojo",cocinas:[]})}>TENGO UN ANTOJO</button></div>
         {error&&<div className="error">{error}</div>}
         {loading?<div className="loading">Cargando lugares…</div>:<>
