@@ -16,6 +16,38 @@ export const Route = createFileRoute("/mapa")({
 function Mapa() {
   const [c, setC] = useState<Contexto | null>(null);
   const [geoStatus, setGeoStatus] = useState<"loading" | "ready" | "manual">("loading");
+  const [geoMessage, setGeoMessage] = useState<string | null>(null);
+
+  const reintentarUbicacion = () => {
+    if (!navigator.geolocation) {
+      setGeoMessage("Este navegador no permite compartir la ubicación. Puedes elegir una zona manualmente.");
+      setGeoStatus("manual");
+      return;
+    }
+    setGeoStatus("loading");
+    setGeoMessage(null);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const saved = leerContexto() ?? contextoVacio;
+        const next: Contexto = {
+          ...saved, usarUbicacion: true,
+          lat: position.coords.latitude, lng: position.coords.longitude,
+          paisId: null, ciudadId: null, zonaId: null,
+          paisNombre: undefined, ciudadNombre: undefined, zonaNombre: "Cerca de ti",
+        };
+        guardarContexto(next);
+        setC(next);
+        setGeoStatus("ready");
+      },
+      (error) => {
+        setGeoStatus("manual");
+        setGeoMessage(error.code === 1
+          ? "El permiso de ubicación está bloqueado. Actívalo para GUÍA·ME en los permisos del navegador o del teléfono."
+          : "No logramos obtener tu ubicación. Comprueba que el GPS esté activado y vuelve a intentarlo.");
+      },
+      { enableHighAccuracy: false, timeout: 18000, maximumAge: 120000 },
+    );
+  };
 
   // Explorar significa "cerca de mí": nunca reutilizar la zona manual anterior
   // (por ejemplo, Casco Antiguo) como si fuera la ubicación actual.
@@ -56,7 +88,7 @@ function Mapa() {
   }, []);
   // El mapa comparte la búsqueda y los filtros de los resultados MATCH.
   // Evita mostrar restaurantes de otra zona o de una cocina distinta.
-  const { data } = useQuery({
+  const { data, error: queryError, isLoading: loadingPlaces } = useQuery({
     queryKey: ["explorar-cercanos", c?.lat, c?.lng],
     enabled: !!c && c.lat != null && c.lng != null,
     queryFn: async () => {
@@ -125,7 +157,7 @@ function Mapa() {
           </div>
         ) : (
           <div className="gm-map-empty">
-            {geoStatus === "loading" ? "Estamos detectando tu ubicación para mostrar restaurantes cercanos…" : geoStatus === "manual" ? <>No pudimos acceder a tu ubicación. No te enviaremos a Casco Antiguo automáticamente. <Link to="/" style={{display:"inline-block",marginTop:12,fontWeight:700,color:"inherit"}}>Buscar en otra zona →</Link></> : "No encontramos restaurantes con ubicación registrada cerca de ti. Prueba más tarde o elige otra zona."}
+            {geoStatus === "loading" ? "Estamos detectando tu ubicación para mostrar restaurantes cercanos…" : geoStatus === "manual" ? <>{geoMessage ?? "No pudimos acceder a tu ubicación. No te enviaremos a Casco Antiguo automáticamente."}<div style={{display:"grid",gap:10,marginTop:14}}><button type="button" className="gm-location-retry" onClick={reintentarUbicacion}>REINTENTAR MI UBICACIÓN</button><Link to="/" style={{display:"inline-block",fontWeight:700,color:"inherit"}}>Buscar en otra zona →</Link></div></> : queryError ? "No pudimos cargar los restaurantes. Comprueba tu conexión y vuelve a entrar en Explorar." : loadingPlaces ? "Buscando restaurantes cercanos…" : "No encontramos restaurantes con ubicación registrada cerca de ti. Prueba más tarde o elige otra zona."}
           </div>
         )}
       </div>
