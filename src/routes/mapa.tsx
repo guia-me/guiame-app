@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import { MapPin } from "lucide-react";
 import MapView from "@/components/guiame/MapView";
 import { imagenRestaurante, MatchBadge } from "@/components/guiame/ui";
-import { calcularMatch, coincideCocina, contextoVacio, guardarContexto, leerContexto, rangoPrecio, type Contexto } from "@/lib/guiame";
-import { buscarRestaurantes } from "@/lib/queries";
+import { calcularMatch, contextoVacio, guardarContexto, leerContexto, normalizarRestaurante, rangoPrecio, type Contexto } from "@/lib/guiame";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/mapa")({
   ssr: false,
@@ -57,16 +57,26 @@ function Mapa() {
   // El mapa comparte la búsqueda y los filtros de los resultados MATCH.
   // Evita mostrar restaurantes de otra zona o de una cocina distinta.
   const { data } = useQuery({
-    queryKey: ["matches", c],
-    enabled: !!c,
-    queryFn: () => buscarRestaurantes(c!),
+    queryKey: ["explorar-cercanos", c?.lat, c?.lng],
+    enabled: !!c && c.lat != null && c.lng != null,
+    queryFn: async () => {
+      const lat = c!.lat!;
+      const lng = c!.lng!;
+      const { data, error } = await supabase.from("restaurantes").select("*")
+        .not("lat", "is", null).not("lng", "is", null)
+        .gte("lat", lat - 0.18).lte("lat", lat + 0.18)
+        .gte("lng", lng - 0.18).lte("lng", lng + 0.18)
+        .limit(300);
+      if (error) throw error;
+      return (data ?? []).map(normalizarRestaurante);
+    },
   });
 
+  // Explorar es un directorio geográfico, no el resultado de MATCH:
+  // no debe heredar filtros de cocina o antojos guardados en la búsqueda anterior.
   const compatibles = (data ?? []).filter((r) => {
     const categorias = r.cocina.map(x => x.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase());
-    if (categorias.some(x => ["cultural", "museo", "teatro", "atraccion", "atracciones"].includes(x))) return false;
-    return !c || c.cocinas.length === 0 ||
-      c.cocinas.some(buscada => r.cocina.some(actual => coincideCocina(actual, buscada)));
+    return !categorias.some(x => ["cultural", "museo", "teatro", "atraccion", "atracciones"].includes(x));
   });
   const lugares = compatibles.filter((r) => r.lat != null && r.lng != null);
   const first = lugares[0];
@@ -87,7 +97,7 @@ function Mapa() {
         </div>
 
         <div className="gm-map-frame">
-          <MapView restaurantes={lugares} centro={center} zoom={c?.usarUbicacion ? 12 : 14} alto={window.innerHeight - 140} />
+          <MapView restaurantes={lugares} centro={center} zoom={c?.usarUbicacion ? 14 : 14} alto={window.innerHeight - 140} ajustarVista={!c?.usarUbicacion} />
         </div>
 
         {lugares.length > 0 ? (
