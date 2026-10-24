@@ -16,13 +16,17 @@ const icono = L.divIcon({
 });
 
 
-function AjustarVistaRestaurantes({ restaurantes }: { restaurantes: Restaurante[] }) {
+function AjustarVistaRestaurantes({ restaurantes, centro, zoom, ajustarVista }: { restaurantes: Restaurante[]; centro: [number, number]; zoom: number; ajustarVista: boolean }) {
   const map = useMap();
   useEffect(() => {
+    if (!ajustarVista) {
+      map.setView(centro, zoom, { animate: false });
+      return;
+    }
     const points = restaurantes.filter(r => r.lat != null && r.lng != null).map(r => [r.lat!, r.lng!] as [number, number]);
     if (points.length === 1) map.setView(points[0], 15, { animate: false });
     else if (points.length > 1) map.fitBounds(L.latLngBounds(points), { padding: [32, 32], maxZoom: 15, animate: false });
-  }, [map, restaurantes]);
+  }, [map, restaurantes, centro, zoom, ajustarVista]);
   return null;
 }
 
@@ -31,15 +35,17 @@ export default function MapView({
   centro,
   zoom = 13,
   alto = 420,
+  ajustarVista = true,
 }: {
   restaurantes: Restaurante[];
   centro: [number, number];
   zoom?: number;
   alto?: number;
+  ajustarVista?: boolean;
 }) {
   return (
     <MapContainer center={centro} zoom={zoom} style={{ height: alto, width: "100%" }} scrollWheelZoom>
-      <AjustarVistaRestaurantes restaurantes={restaurantes} />
+      <AjustarVistaRestaurantes restaurantes={restaurantes} centro={centro} zoom={zoom} ajustarVista={ajustarVista} />
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
