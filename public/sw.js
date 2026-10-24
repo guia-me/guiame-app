@@ -1,4 +1,4 @@
-const CACHE_NAME = "guiame-shell-v2";
+const CACHE_NAME = "guiame-shell-v3";
 const APP_SHELL = ["/", "/manifest.webmanifest", "/icons/guiame.svg"];
 
 self.addEventListener("install", (event) => {
