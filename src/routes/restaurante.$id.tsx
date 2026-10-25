@@ -108,7 +108,7 @@ function Restaurante() {
               <h2 id="guiame-navigation-title" style={{fontFamily:"Georgia,serif",fontSize:28,lineHeight:1.15,margin:"0 0 8px"}}>¿Cómo quieres llegar?</h2>
               <p style={{fontSize:13,color:"#6d6b60",margin:"0 0 20px"}}>{r.nombre}</p>
               {[
-                {name:"Google Maps",url:r.lat != null && r.lng != null ? "https://www.google.com/maps/dir/?api=1&destination="+r.lat+","+r.lng : "https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(r.direccion || r.nombre)},
+                {name:"Google Maps",url:"https://www.google.com/maps/dir/?api=1&destination="+encodeURIComponent([r.nombre, r.direccion, "Ciudad de Panamá, Panamá"].filter(Boolean).join(", "))},
                 {name:"Uber",url:r.lat != null && r.lng != null ? "https://m.uber.com/ul/?action=setPickup&dropoff[latitude]="+r.lat+"&dropoff[longitude]="+r.lng+"&dropoff[nickname]="+encodeURIComponent(r.nombre) : "https://m.uber.com/ul/?action=setPickup&dropoff[formatted_address]="+encodeURIComponent(r.direccion || r.nombre)}
               ].map((opcion,i) => (
                 <a key={opcion.name} href={opcion.url} target="_blank" rel="noreferrer" style={{display:"flex",alignItems:"center",justifyContent:"space-between",minHeight:52,marginTop:10,padding:"0 16px",borderRadius:999,border:i===0?"1px solid #c5a96b":"1px solid #ddd4c3",background:i===0?"#263b32":"#fffdf8",color:i===0?"#fffaf0":"#263b32",fontSize:14,fontWeight:600,textDecoration:"none"}}>
