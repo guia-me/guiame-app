@@ -123,8 +123,10 @@ export type Database = {
           comentario: string | null
           con_quien: string | null
           created_at: string
+          cost: number
           decor: number
           food: number
+          fotos: string[]
           id: string
           personas: string | null
           plato: string | null
@@ -140,8 +142,10 @@ export type Database = {
           comentario?: string | null
           con_quien?: string | null
           created_at?: string
+          cost: number
           decor: number
           food: number
+          fotos?: string[]
           id?: string
           personas?: string | null
           plato?: string | null
@@ -157,8 +161,10 @@ export type Database = {
           comentario?: string | null
           con_quien?: string | null
           created_at?: string
+          cost?: number
           decor?: number
           food?: number
+          fotos?: string[]
           id?: string
           personas?: string | null
           plato?: string | null

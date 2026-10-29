@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Campo, Chip, Shell } from "@/components/guiame/ui";
+import { PhotoUploader, subirFotosComunidad } from "@/components/guiame/PhotoUploader";
 import { AMBIENTES, COCINAS, CON_QUIEN, PRESUPUESTOS, anonId } from "@/lib/guiame";
 import { ciudadesQuery, paisesQuery, zonasQuery } from "@/lib/queries";
 
@@ -93,6 +94,7 @@ function Agregar() {
   const [telefono, setTelefono] = useState("");
   const [web, setWeb] = useState("");
   const [imagen, setImagen] = useState("");
+  const [fotos, setFotos] = useState<File[]>([]);
   const [comentario, setComentario] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [enviado, setEnviado] = useState(false);
@@ -112,6 +114,15 @@ function Agregar() {
     if (!puede) return;
     setEnviando(true);
     setError(null);
+
+    let fotosSubidas: string[] = [];
+    try {
+      fotosSubidas = await subirFotosComunidad(fotos, "locales", anonId());
+    } catch (uploadError) {
+      setEnviando(false);
+      setError(uploadError instanceof Error ? uploadError.message : "No pudimos subir las fotos. Intenta de nuevo.");
+      return;
+    }
 
     const coords = await geolocalizarRestaurante({
       nombre: nombre.trim(),
@@ -136,7 +147,7 @@ function Agregar() {
       lat: coords?.lat ?? null,
       lng: coords?.lng ?? null,
       contacto: telefono.trim() || web.trim() || null,
-      imagen: imagen.trim() || null,
+      imagen: fotosSubidas[0] ?? (imagen.trim() || null),
       estado: "pendiente",
       payload: {
         pais_id: paisId,
@@ -147,6 +158,7 @@ function Agregar() {
         contextos,
         telefono: telefono.trim() || null,
         web: web.trim() || null,
+        fotos: fotosSubidas,
         comentario: comentario.trim() || null,
         precio_min: rango?.min ?? null,
         precio_max: rango?.max ?? null,
@@ -294,9 +306,11 @@ function Agregar() {
           <input className="field mt-3" value={web} onChange={(e) => setWeb(e.target.value)} />
         </section>
 
+        <PhotoUploader files={fotos} onChange={setFotos} title="Fotos del local" help="Sube fachada, interior o ambiente. Hasta 5 fotos de 5 MB cada una." />
+
         <section className="py-5">
-          <p className="eyebrow">Foto (enlace)</p>
-          <input className="field mt-3" value={imagen} onChange={(e) => setImagen(e.target.value)} />
+          <p className="eyebrow">Enlace de foto (opcional)</p>
+          <input className="field mt-3" value={imagen} onChange={(e) => setImagen(e.target.value)} placeholder="https://…" />
         </section>
 
         <section className="py-5">

@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Campo, Chip, Shell } from "@/components/guiame/ui";
+import { PhotoUploader, subirFotosComunidad } from "@/components/guiame/PhotoUploader";
 import {
   AMBIENTES,
   CON_QUIEN,
@@ -47,6 +48,7 @@ function Evaluar() {
   const [recomendaria, setRecomendaria] = useState<boolean | null>(null);
   const [plato, setPlato] = useState("");
   const [comentario, setComentario] = useState("");
+  const [fotos, setFotos] = useState<File[]>([]);
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [exito, setExito] = useState(false);
@@ -56,6 +58,14 @@ function Evaluar() {
     setEnviando(true);
     setError(null);
     setExito(false);
+    let fotosSubidas: string[] = [];
+    try {
+      fotosSubidas = await subirFotosComunidad(fotos, "platos", anonId());
+    } catch (uploadError) {
+      setEnviando(false);
+      setError(uploadError instanceof Error ? uploadError.message : "No pudimos subir las fotos. Intenta de nuevo.");
+      return;
+    }
     const { error: e } = await supabase.from("evaluaciones").insert({
       restaurante_id: id,
       anon_id: anonId(),
@@ -71,6 +81,7 @@ function Evaluar() {
       recomendarias: recomendaria,
       plato: plato.trim() || null,
       comentario: comentario.trim() || null,
+      fotos: fotosSubidas,
     });
     setEnviando(false);
     if (e) {
@@ -185,6 +196,8 @@ function Evaluar() {
                 placeholder="Ej. carimañolas"
               />
             </section>
+
+            <PhotoUploader files={fotos} onChange={setFotos} title="Fotos de los platos" help="Comparte fotos de los platos que probaste. Hasta 5 imágenes de 5 MB cada una." />
 
             <section className="py-5">
               <p className="eyebrow">Comentario</p>

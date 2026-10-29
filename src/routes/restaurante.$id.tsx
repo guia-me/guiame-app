@@ -29,6 +29,7 @@ function Restaurante() {
   const match = calcularMatch(r, c).match;
   const latestComment = (evaluaciones ?? []).find((x:any) => String(x.comentario ?? "").trim())?.comentario;
   const dishes = (evaluaciones ?? []).map((x:any) => String(x.plato ?? "").trim()).filter(Boolean).slice(0,5);
+  const dishPhotos = (evaluaciones ?? []).flatMap((x:any) => Array.isArray(x.fotos) ? x.fotos.map((url:string) => ({ url, plato: String(x.plato ?? "").trim() })) : []);
   const favorite = favs.includes(r.id);
 
   return (
@@ -85,6 +86,16 @@ function Restaurante() {
           <section className="gm-detail-section">
             <h2>Menú y platos recomendados</h2>
             {dishes.length > 0 ? <p>{dishes.map((dish,i) => <span key={i}><strong>{dish}</strong>{i < dishes.length - 1 ? " · " : ""}</span>)}</p> : <p>La comunidad todavía no ha compartido platos de este restaurante.</p>}
+            {dishPhotos.length > 0 && (
+              <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3" aria-label="Fotos de platos compartidas por la comunidad">
+                {dishPhotos.map((photo:any, index:number) => (
+                  <figure key={photo.url + index} className="overflow-hidden rounded-xl border border-[#e1dacf] bg-white">
+                    <img src={photo.url} alt={photo.plato ? `Plato compartido: ${photo.plato}` : "Plato compartido por la comunidad"} loading="lazy" className="h-36 w-full object-cover" />
+                    {photo.plato && <figcaption className="px-2 py-2 text-xs">{photo.plato}</figcaption>}
+                  </figure>
+                ))}
+              </div>
+            )}
             <p className="gm-card-meta">Los platos aparecerán aquí a medida que los usuarios compartan sus experiencias.</p>
           </section>
         )}
