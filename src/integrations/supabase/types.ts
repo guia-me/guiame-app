@@ -125,6 +125,7 @@ export type Database = {
           created_at: string
           decor: number
           food: number
+          fotos: string[]
           id: string
           personas: string | null
           plato: string | null
@@ -142,6 +143,7 @@ export type Database = {
           created_at?: string
           decor: number
           food: number
+          fotos?: string[]
           id?: string
           personas?: string | null
           plato?: string | null
@@ -159,6 +161,7 @@ export type Database = {
           created_at?: string
           decor?: number
           food?: number
+          fotos?: string[]
           id?: string
           personas?: string | null
           plato?: string | null
