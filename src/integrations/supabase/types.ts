@@ -123,6 +123,7 @@ export type Database = {
           comentario: string | null
           con_quien: string | null
           created_at: string
+          cost: number
           decor: number
           food: number
           fotos: string[]
@@ -141,6 +142,7 @@ export type Database = {
           comentario?: string | null
           con_quien?: string | null
           created_at?: string
+          cost: number
           decor: number
           food: number
           fotos?: string[]
@@ -159,6 +161,7 @@ export type Database = {
           comentario?: string | null
           con_quien?: string | null
           created_at?: string
+          cost?: number
           decor?: number
           food?: number
           fotos?: string[]
